@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIFI CAM</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2d2d2d;
+            color: #ffffff;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .app-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #2d2d2d;
+        }
+
+        .title-bar {
+            height: 32px;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            -webkit-app-region: drag;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .close-btn { background: #ff5f56; }
+        .minimize-btn { background: #ffbd2e; }
+        .maximize-btn { background: #27c93f; }
+
+        .app-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .pro-badge {
+            background: #0078d4;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: auto;
+            margin-right: 10px;
+        }
+
+        .menu-icons {
+            display: flex;
+            gap: 10px;
+            -webkit-app-region: no-drag;
+        }
+
+        .menu-icon {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            color: #d0d0d0;
+        }
+
+        .menu-icon:hover {
+            opacity: 1;
+        }
+
+        .toolbar {
+            height: 110px;
+            background: #2d2d2d;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .mode-btn {
+            width: 100px;
+            height: 80px;
+            background: #3a3a3c;
+            border: 1px solid #4a4a4c;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .mode-btn:hover {
+            background: #404042;
+        }
+
+        .mode-btn.selected {
+            background: #4a4a4c;
+            border-color: #5a5a5c;
+        }
+
+        .mode-btn.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            color: #ff5252;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .mode-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d0d0d0;
+        }
+
+        .mode-label {
+            font-size: 11px;
+            color: #d0d0d0;
+        }
+
+        .rec-button {
+            width: 80px;
+            height: 80px;
+            background: #ff5252;
+            border: 3px solid #ff5252;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: auto;
+            position: relative;
+        }
+
+        .rec-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 82, 82, 0.5);
+        }
+
+        .rec-button.recording {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 82, 82, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0); }
+        }
+
+        .rec-text {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .main-content {
+            flex: 1;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .window-selector {
+            display: none;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .window-selector.active {
+            display: flex;
+        }
+
+        .window-card {
+            width: 200px;
+            background: #2d2d2d;
+            border: 2px solid #3a3a3c;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .window-card:hover {
+            border-color: #5a5a5c;
+            transform: translateY(-2px);
+        }
+
+        .window-card.selected {
+            border-color: #0078d4;
+        }
+
+        .window-preview {
+            height: 120px;
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .window-icon {
+            width: 40px;
+            height: 40px;
+            color: #5a5a5c;
+        }
+
+        .window-info {
+            padding: 8px;
+            background: #2d2d2d;
+        }
+
+        .window-title {
+            font-size: 12px;
+            color: #ffffff;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .window-type {
+            font-size: 10px;
+            color: #9a9a9a;
+        }
+
+        .info-text {
+            text-align: center;
+            color: #9a9a9a;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .history-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3a3a3c;
+        }
+
+        .section-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .clear-btn {
+            background: #3a3a3c;
+            border: 1px solid #4a4a4c;
+            color: #d0d0d0;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: #404042;
+            color: #ff5252;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: #2d2d2d;
+            border: 1px solid #3a3a3c;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background: #3a3a3c;
+            border-color: #4a4a4c;
+        }
+
+        .history-icon {
+            width: 40px;
+            height: 40px;
+            background: #3a3a3c;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9a9a9a;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-name {
+            font-size: 13px;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .history-meta {
+            font-size: 11px;
+            color: #9a9a9a;
+            display: flex;
+            gap: 10px;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            background: #3a3a3c;
+            border: 1px solid #4a4a4c;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #d0d0d0;
+        }
+
+        .action-btn:hover {
+            background: #404042;
+        }
+
+        .action-btn.play:hover {
+            color: #27c93f;
+        }
+
+        .action-btn.download:hover {
+            color: #0078d4;
+        }
+
+        .action-btn.delete:hover {
+            color: #ff5252;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #9a9a9a;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .empty-state span {
+            font-size: 12px;
+            color: #5a5a5c;
+        }
+
+        .bottom-bar {
+            height: 50px;
+            background: #2d2d2d;
+            border-top: 1px solid #3a3a3c;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        .control-btn {
+            width: 32px;
+            height: 32px;
+            background: #3a3a3c;
+            border: 1px solid #4a4a4c;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            background: #404042;
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .control-icon {
+            width: 18px;
+            height: 18px;
+            color: #d0d0d0;
+        }
+
+        .status-info {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 12px;
+            color: #9a9a9a;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-value {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        #previewVideo {
+            display: none;
+        }
+
+        .placeholder-screen {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5a5a5c;
+            font-size: 14px;
+        }
+
+        .recording-timer {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .recording .recording-timer {
+            display: block;
+        }
+
+        #downloadLink {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #downloadLink a {
+            background: #0078d4;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        #downloadLink a:hover {
+            background: #106ebe;
+        }
+
+        .rec-icon {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        /* 설정 모달 스타일 */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .settings-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-container {
+            width: 600px;
+            height: 500px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .settings-header {
+            height: 50px;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .close-settings {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            color: #9a9a9a;
+            transition: color 0.2s;
+        }
+
+        .close-settings:hover {
+            color: #ffffff;
+        }
+
+        .settings-tabs {
+            height: 50px;
+            background: #232325;
+            display: flex;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .settings-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #9a9a9a;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .settings-tab:hover {
+            color: #d0d0d0;
+        }
+
+        .settings-tab.active {
+            color: #0078d4;
+            border-bottom-color: #0078d4;
+        }
+
+        .tab-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .tab-label {
+            font-size: 13px;
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .settings-panel {
+            display: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            font-size: 13px;
+            color: #d0d0d0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .setting-input {
+            width: 100%;
+            height: 32px;
+            background: #3a3a3c;
+            border: 1px solid #4a4a4c;
+            border-radius: 4px;
+            color: #ffffff;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+
+        .setting-select {
+            width: 100%;
+            height: 32px;
+            background: #3a3a3c;
+            border: 1px solid #4a4a4c;
+            border-radius: 4px;
+            color: #ffffff;
+            padding: 0 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .setting-checkbox {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #d0d0d0;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .shortcut-input {
+            width: 200px;
+            height: 32px;
+            background: #3a3a3c;
+            border: 1px solid #4a4a4c;
+            border-radius: 4px;
+            color: #ffffff;
+            padding: 0 10px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .folder-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .folder-input {
+            flex: 1;
+        }
+
+        .browse-btn {
+            width: 80px;
+            height: 32px;
+            background: #3a3a3c;
+            border: 1px solid #4a4a4c;
+            border-radius: 4px;
+            color: #d0d0d0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .browse-btn:hover {
+            background: #404042;
+        }
+
+        .quality-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #9a9a9a;
+        }
+
+        .settings-footer {
+            height: 60px;
+            background: #232325;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 20px;
+            gap: 10px;
+            border-top: 1px solid #1a1a1a;
+        }
+
+        .settings-btn {
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .settings-btn.cancel {
+            background: #3a3a3c;
+            color: #d0d0d0;
+        }
+
+        .settings-btn.cancel:hover {
+            background: #404042;
+        }
+
+        .settings-btn.save {
+            background: #0078d4;
+            color: white;
+        }
+
+        .settings-btn.save:hover {
+            background: #106ebe;
+        }
+
+        .countdown-setting {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .countdown-input {
+            width: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="title-bar">
+            <div class="app-title">AIFI CAM</div>
+            <div class="menu-icons">
+                <i data-lucide="folder" class="menu-icon" id="openFileBtn" title="녹화 파일 열기"></i>
+            </div>
+        </div>
+        
+        <!-- 파일 입력 (숨김) -->
+        <input type="file" id="fileInput" accept="video/*,.webm,.mp4,.avi,.mov" style="display: none;">
+
+        <div class="toolbar">
+            <button class="mode-btn selected" data-mode="screen">
+                <i data-lucide="monitor" class="mode-icon"></i>
+                <div class="mode-label">녹화 하기</div>
+            </button>
+            
+            <button class="mode-btn" id="settingsBtn" data-mode="settings">
+                <i data-lucide="settings" class="mode-icon"></i>
+                <div class="mode-label">환경설정</div>
+            </button>
+            
+            <button class="rec-button" id="startBtn">
+                <span class="rec-text">REC</span>
+            </button>
+        </div>
+
+        <div class="main-content">
+            
+            
+            <!-- 녹화 히스토리 섹션 -->
+            <div class="history-section">
+                <div class="section-header">
+                    <h3>녹화 히스토리</h3>
+                    <button class="clear-btn" id="clearCacheBtn">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                        캐시 삭제
+                    </button>
+                </div>
+                
+                <div class="history-list" id="historyList">
+                    <!-- 녹화된 파일들이 여기에 표시됩니다 -->
+                </div>
+                
+                <div class="empty-state" id="emptyState">
+                    <i data-lucide="film" style="width: 48px; height: 48px; color: #5a5a5c;"></i>
+                    <p>녹화된 파일이 없습니다</p>
+                    <span>녹화를 시작하려면 REC 버튼을 누르세요</span>
+                </div>
+            </div>
+            
+            <!-- 미리보기 영역 (숨김) -->
+            <video id="previewVideo" style="display: none;" muted autoplay></video>
+
+            <div id="downloadLink">
+                <a href="#" id="downloadAnchor">
+                    <i data-lucide="download" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 5px;"></i>
+                    녹화 파일 다운로드
+                </a>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <button class="control-btn" id="pauseBtn" disabled>
+                <i data-lucide="pause" class="control-icon"></i>
+            </button>
+            <button class="control-btn" id="stopBtn" disabled>
+                <i data-lucide="square" class="control-icon"></i>
+            </button>
+            <button class="control-btn">
+                <i data-lucide="camera" class="control-icon"></i>
+            </button>
+            <button class="control-btn">
+                <i data-lucide="mic" class="control-icon"></i>
+            </button>
+            
+            <div class="status-info">
+                <div class="status-item">
+                    <span class="status-value">5K</span>
+                </div>
+                <div class="status-item">
+                    <span>|</span>
+                    <span class="status-value">60FPS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-container">
+            <div class="settings-header">
+                <div class="settings-title">환경설정</div>
+                <i data-lucide="x" class="close-settings" id="closeSettings"></i>
+            </div>
+            
+            <div class="settings-tabs">
+                <div class="settings-tab active" data-tab="general">
+                    <i data-lucide="settings" class="tab-icon"></i>
+                    <span class="tab-label">일반</span>
+                </div>
+                <div class="settings-tab" data-tab="video">
+                    <i data-lucide="video" class="tab-icon"></i>
+                    <span class="tab-label">비디오</span>
+                </div>
+                <div class="settings-tab" data-tab="overlay">
+                    <i data-lucide="monitor" class="tab-icon"></i>
+                    <span class="tab-label">오버레이</span>
+                </div>
+                <div class="settings-tab" data-tab="shortcuts">
+                    <i data-lucide="keyboard" class="tab-icon"></i>
+                    <span class="tab-label">단축키</span>
+                </div>
+            </div>
+            
+            <div class="settings-content">
+                <!-- 일반 설정 -->
+                <div class="settings-panel active" id="generalPanel">
+                    <div class="setting-group">
+                        <div class="setting-label">앱 테마</div>
+                        <select class="setting-select" id="themeSelect">
+                            <option value="dark">다크 모드</option>
+                            <option value="light">라이트 모드</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">옵션</div>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="setting-checkbox" id="startupCheck">
+                            로그인 시 시작
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="setting-checkbox" id="desktopIconCheck">
+                            바탕 화면 아이콘 캡처에서 제외하기
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="setting-checkbox" id="excludeSelfCheck" checked>
+                            AIFI CAM 실행 캡처에서 제외
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="setting-checkbox" id="countdownCheck" checked>
+                            녹화 시작 전 카운트다운
+                            <div class="countdown-setting">
+                                <input type="number" class="setting-input countdown-input" id="countdownValue" value="3" min="1" max="10">
+                                <span style="color: #9a9a9a; font-size: 12px;">초</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">출력 폴더</div>
+                        <div class="folder-selector">
+                            <input type="text" class="setting-input folder-input" id="outputFolder" value="/Users/sohee/Downloads/다녹스쿨">
+                            <button class="browse-btn">찾아보기</button>
+                        </div>
+                        <label class="checkbox-label" style="margin-top: 10px;">
+                            <input type="checkbox" class="setting-checkbox" id="showAfterRecord" checked>
+                            녹화 후 출력 비디오 표시하기
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 비디오 설정 -->
+                <div class="settings-panel" id="videoPanel">
+                    <div class="setting-group">
+                        <div class="setting-label">형식</div>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 11px; color: #9a9a9a; margin-bottom: 5px;">파일 형식</div>
+                                <select class="setting-select" id="formatSelect">
+                                    <option value="mp4">MP4</option>
+                                    <option value="webm">WebM</option>
+                                    <option value="avi">AVI</option>
+                                    <option value="mov">MOV</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 11px; color: #9a9a9a; margin-bottom: 5px;">코덱</div>
+                                <select class="setting-select" id="codecSelect">
+                                    <option value="h264">H.264</option>
+                                    <option value="h265">H.265</option>
+                                    <option value="vp8">VP8</option>
+                                    <option value="vp9">VP9</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">
+                            <span>품질</span>
+                            <select class="setting-select" style="width: 100px;" id="qualityMode">
+                                <option value="vbr">VBR</option>
+                                <option value="cbr">CBR</option>
+                            </select>
+                        </div>
+                        <input type="range" class="quality-slider" id="qualitySlider" min="0" max="100" value="50">
+                        <div class="slider-labels">
+                            <span>0</span>
+                            <span id="qualityValue">50</span>
+                            <span>100</span>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">최대 해상도</div>
+                        <select class="setting-select" id="resolutionSelect">
+                            <option value="5k">5K UHD (5120x2880)</option>
+                            <option value="4k">4K UHD (3840x2160)</option>
+                            <option value="1080p">Full HD (1920x1080)</option>
+                            <option value="720p">HD (1280x720)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">FPS</div>
+                        <select class="setting-select" id="fpsSelect">
+                            <option value="60">60</option>
+                            <option value="30">30</option>
+                            <option value="24">24</option>
+                            <option value="15">15</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">오디오</div>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 11px; color: #9a9a9a; margin-bottom: 5px;">코덱</div>
+                                <select class="setting-select" id="audioCodec">
+                                    <option value="aac">AAC</option>
+                                    <option value="mp3">MP3</option>
+                                    <option value="opus">Opus</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 11px; color: #9a9a9a; margin-bottom: 5px;">품질</div>
+                                <select class="setting-select" id="audioBitrate">
+                                    <option value="256">높음 - 256Kbps</option>
+                                    <option value="192">중간 - 192Kbps</option>
+                                    <option value="128">낮음 - 128Kbps</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">스피커 및 마이크</div>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="setting-checkbox" id="speakerCheck" checked>
+                            스피커 오디오 녹음하기
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="setting-checkbox" id="micCheck">
+                            마이크 오디오 녹음하기
+                        </label>
+                        <select class="setting-select" id="micSelect" style="margin-top: 10px; display: none;">
+                            <option>MacBook Pro 마이크</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 오버레이 설정 -->
+                <div class="settings-panel" id="overlayPanel">
+                    <div class="setting-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="setting-checkbox" id="cursorCheck" checked>
+                            출력 영상에 커서 추가하기
+                        </label>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="setting-checkbox" id="webcamCheck">
+                            화면에 웹캠 비디오 표시하기
+                        </label>
+                        <select class="setting-select" id="webcamSelect" style="margin-top: 10px; display: none;">
+                            <option>FaceTime HD 카메라 (내장형)</option>
+                        </select>
+                        <div style="margin-top: 10px; display: none;" id="webcamOptions">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="setting-checkbox" id="webcamMirror">
+                                미리
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="setting-checkbox" id="webcamFlip">
+                                세로로 뒤집기
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 단축키 설정 -->
+                <div class="settings-panel" id="shortcutsPanel">
+                    <div class="setting-group">
+                        <div class="setting-label">
+                            <span>현재 화면 녹화</span>
+                            <input type="text" class="shortcut-input" id="recordShortcut" placeholder="클릭 후 단축키 입력" data-action="record">
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">
+                            <span>현재 윈도우 녹화</span>
+                            <input type="text" class="shortcut-input" id="windowShortcut" placeholder="클릭 후 단축키 입력" data-action="window">
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">
+                            <span>녹화 중단</span>
+                            <input type="text" class="shortcut-input" id="stopShortcut" placeholder="클릭 후 단축키 입력" data-action="stop">
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">
+                            <span>일시 정지 / 재개</span>
+                            <input type="text" class="shortcut-input" id="pauseShortcut" placeholder="클릭 후 단축키 입력" data-action="pause">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 10px; background: #3a3a3c; border-radius: 4px;">
+                        <p style="font-size: 11px; color: #9a9a9a; margin: 0;">
+                            💡 단축키 등록 방법: 입력 필드를 클릭한 후 원하는 키 조합을 누르세요.<br>
+                            예시: Ctrl+Alt+R, Cmd+Shift+S 등
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-footer">
+                <button class="settings-btn cancel" id="cancelSettings">취소</button>
+                <button class="settings-btn save" id="saveSettings">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lucide 아이콘 초기화
+        lucide.createIcons();
+
+        let mediaRecorder = null;
+        let stream = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let isPaused = false;
+        let startTime = null;
+        let timerInterval = null;
+        let recordingHistory = JSON.parse(localStorage.getItem('recordingHistory') || '[]');
+        
+        // 디버깅을 위한 전역 변수 노출
+        window.mediaRecorder = mediaRecorder;
+        window.stream = stream;
+        window.isRecording = isRecording;
+
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const previewVideo = document.getElementById('previewVideo');
+        const placeholder = document.getElementById('placeholder');
+        const recordingTime = document.getElementById('recordingTime');
+        const downloadLink = document.getElementById('downloadLink');
+        const downloadAnchor = document.getElementById('downloadAnchor');
+        const openFileBtn = document.getElementById('openFileBtn');
+        const fileInput = document.getElementById('fileInput');
+
+        // 녹화 시작/중지
+        startBtn.addEventListener('click', async () => {
+            if (!isRecording) {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        // 일시정지
+        pauseBtn.addEventListener('click', () => {
+            if (!pauseBtn.disabled) {
+                if (isPaused) {
+                    resumeRecording();
+                } else {
+                    pauseRecording();
+                }
+            }
+        });
+
+        // 중지
+        stopBtn.addEventListener('click', () => {
+            if (!stopBtn.disabled) {
+                stopRecording();
+            }
+        });
+
+        async function startRecording() {
+            try {
+                console.log('화면 공유 시작 시도...');
+                
+                // 화면 공유 스트림 가져오기
+                stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        frameRate: { ideal: 60 }
+                    },
+                    audio: true
+                });
+
+                console.log('스트림 획득 성공:', stream);
+                
+                // 스트림 유효성 검증
+                const videoTracks = stream.getVideoTracks();
+                if (!videoTracks || videoTracks.length === 0) {
+                    throw new Error('비디오 트랙을 찾을 수 없습니다.');
+                }
+
+                // 미리보기 표시 (현재는 숨김 처리)
+                previewVideo.srcObject = stream;
+                // previewVideo.style.display = 'block'; // 미리보기 비활성화
+
+                // MediaRecorder 설정
+                const options = {
+                    mimeType: 'video/webm;codecs=vp8,opus'
+                };
+
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    console.log('기본 mimeType 지원 안함, webm으로 변경');
+                    options.mimeType = 'video/webm';
+                }
+
+                mediaRecorder = new MediaRecorder(stream, options);
+                recordedChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                        console.log('데이터 청크 추가:', event.data.size, 'bytes');
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    console.log('MediaRecorder 중지됨');
+                    handleStop();
+                };
+
+                mediaRecorder.onerror = (event) => {
+                    console.error('MediaRecorder 에러:', event.error);
+                };
+
+                // 화면 공유 종료 감지
+                const videoTrack = videoTracks[0];
+                if (videoTrack) {
+                    videoTrack.onended = () => {
+                        console.log('사용자가 화면 공유를 중지했습니다.');
+                        if (isRecording) {
+                            stopRecording();
+                            alert('화면 공유가 중지되어 녹화가 종료되었습니다.');
+                        }
+                    };
+                    
+                    // 트랙 상태 모니터링
+                    videoTrack.addEventListener('mute', () => {
+                        console.log('비디오 트랙이 음소거되었습니다.');
+                    });
+                    
+                    console.log('비디오 트랙 상태:', {
+                        enabled: videoTrack.enabled,
+                        muted: videoTrack.muted,
+                        readyState: videoTrack.readyState,
+                        label: videoTrack.label
+                    });
+                }
+
+                // 녹화 시작
+                mediaRecorder.start(1000); // 1초마다 데이터 수집
+                isRecording = true;
+                startTime = Date.now();
+                
+                // 전역 변수 업데이트
+                window.mediaRecorder = mediaRecorder;
+                window.stream = stream;
+                window.isRecording = isRecording;
+                
+                console.log('녹화 시작됨');
+
+                // UI 업데이트
+                startBtn.classList.add('recording');
+                startBtn.innerHTML = '<span class="rec-text">STOP</span>';
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+
+                // 타이머 시작
+                startTimer();
+
+            } catch (error) {
+                console.error('녹화 시작 실패:', error);
+                
+                // 에러 메시지 개선
+                let errorMessage = '';
+                
+                if (error.name === 'NotAllowedError' || error.message.includes('denied')) {
+                    errorMessage = '화면 녹화를 시작하려면 화면을 선택해주세요.\n\n취소하셨다면 다시 REC 버튼을 누르고 화면을 선택해주세요.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = '화면 공유를 사용할 수 없습니다.\n브라우저가 화면 공유를 지원하지 않습니다.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = '화면을 읽을 수 없습니다.\n다른 앱이 화면을 사용 중일 수 있습니다.';
+                } else {
+                    errorMessage = `화면 녹화를 시작할 수 없습니다.\n\n에러: ${error.message}`;
+                }
+                
+                alert(errorMessage);
+                
+                // UI 초기화
+                isRecording = false;
+                startBtn.classList.remove('recording');
+                startBtn.innerHTML = '<span class="rec-text">REC</span>';
+            }
+        }
+
+        function pauseRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.pause();
+                isPaused = true;
+                pauseBtn.innerHTML = '<i data-lucide="play" class="control-icon"></i>';
+                lucide.createIcons();
+                clearInterval(timerInterval);
+            }
+        }
+
+        function resumeRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'paused') {
+                mediaRecorder.resume();
+                isPaused = false;
+                pauseBtn.innerHTML = '<i data-lucide="pause" class="control-icon"></i>';
+                lucide.createIcons();
+                startTimer();
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                
+                // 스트림 정지
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                // UI 업데이트
+                isRecording = false;
+                isPaused = false;
+                
+                // 전역 변수 업데이트
+                window.isRecording = false;
+                window.mediaRecorder = null;
+                window.stream = null;
+                
+                startBtn.classList.remove('recording');
+                startBtn.innerHTML = '<span class="rec-text">REC</span>';
+                pauseBtn.disabled = true;
+                stopBtn.disabled = true;
+                pauseBtn.innerHTML = '<i data-lucide="pause" class="control-icon"></i>';
+                lucide.createIcons();
+
+                // 타이머 중지
+                clearInterval(timerInterval);
+            }
+        }
+
+        function handleStop() {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            
+            // 녹화 정보 저장
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const fileName = `aifi_cam_${timestamp}.webm`;
+            const recordingData = {
+                id: Date.now(),
+                name: fileName,
+                size: blob.size,
+                date: new Date().toISOString(),
+                url: url,
+                duration: getRecordingDuration()
+            };
+            
+            // 히스토리에 추가
+            recordingHistory.unshift(recordingData);
+            if (recordingHistory.length > 10) { // 최대 10개까지만 저장
+                recordingHistory = recordingHistory.slice(0, 10);
+            }
+            localStorage.setItem('recordingHistory', JSON.stringify(recordingHistory));
+            
+            // 히스토리 UI 업데이트
+            updateHistoryUI();
+            
+            // 다운로드 링크 생성
+            downloadAnchor.href = url;
+            downloadAnchor.download = fileName;
+            downloadLink.style.display = 'block';
+            
+            // Lucide 아이콘 재생성
+            lucide.createIcons();
+
+            // 자동 다운로드
+            downloadAnchor.click();
+        }
+        
+        function getRecordingDuration() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function updateHistoryUI() {
+            const historyList = document.getElementById('historyList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (recordingHistory.length === 0) {
+                historyList.style.display = 'none';
+                emptyState.style.display = 'flex';
+            } else {
+                historyList.style.display = 'flex';
+                emptyState.style.display = 'none';
+                
+                historyList.innerHTML = recordingHistory.map(item => `
+                    <div class="history-item">
+                        <div class="history-icon">
+                            <i data-lucide="video" style="width: 20px; height: 20px;"></i>
+                        </div>
+                        <div class="history-info">
+                            <div class="history-name">${item.name}</div>
+                            <div class="history-meta">
+                                <span>${formatFileSize(item.size)}</span>
+                                <span>•</span>
+                                <span>${item.duration}</span>
+                                <span>•</span>
+                                <span>${formatDate(item.date)}</span>
+                            </div>
+                        </div>
+                        <div class="history-actions">
+                            <button class="action-btn play" onclick="playRecording('${item.id}')">
+                                <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+                            </button>
+                            <button class="action-btn download" onclick="downloadRecording('${item.id}')">
+                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteRecording('${item.id}')">
+                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Lucide 아이콘 재생성
+                lucide.createIcons();
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            const mb = bytes / (1024 * 1024);
+            return `${mb.toFixed(2)} MB`;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) return '방금 전';
+            if (diffMins < 60) return `${diffMins}분 전`;
+            if (diffMins < 1440) return `${Math.floor(diffMins / 60)}시간 전`;
+            return date.toLocaleDateString('ko-KR');
+        }
+        
+        function playRecording(id) {
+            const recording = recordingHistory.find(r => r.id == id);
+            if (recording) {
+                window.open(recording.url, '_blank');
+            }
+        }
+        
+        function downloadRecording(id) {
+            const recording = recordingHistory.find(r => r.id == id);
+            if (recording) {
+                const a = document.createElement('a');
+                a.href = recording.url;
+                a.download = recording.name;
+                a.click();
+            }
+        }
+        
+        function deleteRecording(id) {
+            if (confirm('이 녹화 파일을 삭제하시겠습니까?')) {
+                recordingHistory = recordingHistory.filter(r => r.id != id);
+                localStorage.setItem('recordingHistory', JSON.stringify(recordingHistory));
+                updateHistoryUI();
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const seconds = (elapsed % 60).toString().padStart(2, '0');
+                // 타이머 표시 (현재는 콘솔에만 출력)
+                console.log(`Recording time: ${minutes}:${seconds}`);
+            }, 1000);
+        }
+
+        // 모드 버튼 이벤트
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.id === 'settingsBtn') {
+                    // 설정 버튼 클릭 시 모달 열기
+                    openSettingsModal();
+                } else {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                }
+            });
+        });
+
+        // 모니터 카드 선택
+        document.querySelectorAll('.monitor-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.monitor-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            });
+        });
+
+        // 파일 열기 버튼 클릭 이벤트
+        openFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 파일 선택 시 처리
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                // 비디오 파일 처리
+                const url = URL.createObjectURL(file);
+                
+                // 새 창에서 비디오 재생
+                const videoWindow = window.open('', '_blank', 'width=800,height=600');
+                videoWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>${file.name} - AIFI CAM Player</title>
+                        <style>
+                            body {
+                                margin: 0;
+                                padding: 0;
+                                background: #000;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                            }
+                            video {
+                                max-width: 100%;
+                                max-height: 100%;
+                                width: auto;
+                                height: auto;
+                            }
+                            .controls {
+                                position: fixed;
+                                bottom: 20px;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                background: rgba(0,0,0,0.7);
+                                padding: 10px 20px;
+                                border-radius: 8px;
+                                color: white;
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                                font-size: 14px;
+                            }
+                            .filename {
+                                position: fixed;
+                                top: 20px;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                background: rgba(0,0,0,0.7);
+                                padding: 8px 16px;
+                                border-radius: 6px;
+                                color: white;
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                                font-size: 13px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="filename">${file.name}</div>
+                        <video controls autoplay>
+                            <source src="${url}" type="${file.type}">
+                            브라우저가 비디오 재생을 지원하지 않습니다.
+                        </video>
+                        <div class="controls">
+                            파일 크기: ${(file.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                    </body>
+                    </html>
+                `);
+                
+                // 파일 입력 초기화
+                event.target.value = '';
+            }
+        });
+        
+        // 캐시 삭제 버튼
+        const clearCacheBtn = document.getElementById('clearCacheBtn');
+        clearCacheBtn.addEventListener('click', () => {
+            if (confirm('모든 녹화 히스토리를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                recordingHistory = [];
+                localStorage.removeItem('recordingHistory');
+                updateHistoryUI();
+                alert('캐시가 삭제되었습니다.');
+            }
+        });
+        
+        // 페이지 로드 시 히스토리 표시
+        window.addEventListener('load', () => {
+            updateHistoryUI();
+        });
+
+        // 설정 관련 변수 및 함수
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettings');
+        const cancelSettingsBtn = document.getElementById('cancelSettings');
+        const saveSettingsBtn = document.getElementById('saveSettings');
+        
+        // 설정값 저장 객체
+        let appSettings = JSON.parse(localStorage.getItem('appSettings') || JSON.stringify({
+            general: {
+                theme: 'dark',
+                startupLaunch: false,
+                excludeDesktopIcons: false,
+                excludeSelf: true,
+                countdown: false,
+                countdownSeconds: 3,
+                outputFolder: '/Users/sohee/Downloads/다녹스쿨',
+                showAfterRecord: true
+            },
+            video: {
+                format: 'mp4',
+                codec: 'h264',
+                qualityMode: 'vbr',
+                quality: 50,
+                resolution: '5k',
+                fps: 60,
+                audioCodec: 'aac',
+                audioBitrate: '256',
+                recordSpeaker: true,
+                recordMic: false
+            },
+            overlay: {
+                showCursor: true,
+                showWebcam: false,
+                webcamMirror: false,
+                webcamFlip: false
+            },
+            shortcuts: {
+                record: '',
+                window: '',
+                stop: '',
+                pause: ''
+            }
+        }));
+
+        // 설정 모달 열기
+        function openSettingsModal() {
+            settingsModal.classList.add('active');
+            loadSettings();
+            lucide.createIcons();
+        }
+
+        // 설정 모달 닫기
+        function closeSettingsModal() {
+            settingsModal.classList.remove('active');
+        }
+
+        // 설정값 불러오기
+        function loadSettings() {
+            // 일반 설정
+            document.getElementById('themeSelect').value = appSettings.general.theme;
+            document.getElementById('startupCheck').checked = appSettings.general.startupLaunch;
+            document.getElementById('desktopIconCheck').checked = appSettings.general.excludeDesktopIcons;
+            document.getElementById('excludeSelfCheck').checked = appSettings.general.excludeSelf;
+            document.getElementById('countdownCheck').checked = appSettings.general.countdown;
+            document.getElementById('countdownValue').value = appSettings.general.countdownSeconds;
+            document.getElementById('outputFolder').value = appSettings.general.outputFolder;
+            document.getElementById('showAfterRecord').checked = appSettings.general.showAfterRecord;
+
+            // 비디오 설정
+            document.getElementById('formatSelect').value = appSettings.video.format;
+            document.getElementById('codecSelect').value = appSettings.video.codec;
+            document.getElementById('qualityMode').value = appSettings.video.qualityMode;
+            document.getElementById('qualitySlider').value = appSettings.video.quality;
+            document.getElementById('qualityValue').textContent = appSettings.video.quality;
+            document.getElementById('resolutionSelect').value = appSettings.video.resolution;
+            document.getElementById('fpsSelect').value = appSettings.video.fps;
+            document.getElementById('audioCodec').value = appSettings.video.audioCodec;
+            document.getElementById('audioBitrate').value = appSettings.video.audioBitrate;
+            document.getElementById('speakerCheck').checked = appSettings.video.recordSpeaker;
+            document.getElementById('micCheck').checked = appSettings.video.recordMic;
+
+            // 오버레이 설정
+            document.getElementById('cursorCheck').checked = appSettings.overlay.showCursor;
+            document.getElementById('webcamCheck').checked = appSettings.overlay.showWebcam;
+            document.getElementById('webcamMirror').checked = appSettings.overlay.webcamMirror;
+            document.getElementById('webcamFlip').checked = appSettings.overlay.webcamFlip;
+
+            // 단축키 설정
+            document.getElementById('recordShortcut').value = appSettings.shortcuts.record;
+            document.getElementById('windowShortcut').value = appSettings.shortcuts.window || '';
+            document.getElementById('stopShortcut').value = appSettings.shortcuts.stop;
+            document.getElementById('pauseShortcut').value = appSettings.shortcuts.pause || '';
+
+            // 웹캠 옵션 표시/숨기기
+            const webcamSelect = document.getElementById('webcamSelect');
+            const webcamOptions = document.getElementById('webcamOptions');
+            if (appSettings.overlay.showWebcam) {
+                webcamSelect.style.display = 'block';
+                webcamOptions.style.display = 'block';
+            }
+
+            // 마이크 옵션 표시/숨기기
+            const micSelect = document.getElementById('micSelect');
+            if (appSettings.video.recordMic) {
+                micSelect.style.display = 'block';
+            }
+        }
+
+        // 설정값 저장
+        function saveSettings() {
+            // 일반 설정
+            appSettings.general.theme = document.getElementById('themeSelect').value;
+            appSettings.general.startupLaunch = document.getElementById('startupCheck').checked;
+            appSettings.general.excludeDesktopIcons = document.getElementById('desktopIconCheck').checked;
+            appSettings.general.excludeSelf = document.getElementById('excludeSelfCheck').checked;
+            appSettings.general.countdown = document.getElementById('countdownCheck').checked;
+            appSettings.general.countdownSeconds = parseInt(document.getElementById('countdownValue').value);
+            appSettings.general.outputFolder = document.getElementById('outputFolder').value;
+            appSettings.general.showAfterRecord = document.getElementById('showAfterRecord').checked;
+
+            // 비디오 설정
+            appSettings.video.format = document.getElementById('formatSelect').value;
+            appSettings.video.codec = document.getElementById('codecSelect').value;
+            appSettings.video.qualityMode = document.getElementById('qualityMode').value;
+            appSettings.video.quality = parseInt(document.getElementById('qualitySlider').value);
+            appSettings.video.resolution = document.getElementById('resolutionSelect').value;
+            appSettings.video.fps = parseInt(document.getElementById('fpsSelect').value);
+            appSettings.video.audioCodec = document.getElementById('audioCodec').value;
+            appSettings.video.audioBitrate = document.getElementById('audioBitrate').value;
+            appSettings.video.recordSpeaker = document.getElementById('speakerCheck').checked;
+            appSettings.video.recordMic = document.getElementById('micCheck').checked;
+
+            // 오버레이 설정
+            appSettings.overlay.showCursor = document.getElementById('cursorCheck').checked;
+            appSettings.overlay.showWebcam = document.getElementById('webcamCheck').checked;
+            appSettings.overlay.webcamMirror = document.getElementById('webcamMirror').checked;
+            appSettings.overlay.webcamFlip = document.getElementById('webcamFlip').checked;
+
+            // 단축키 설정
+            appSettings.shortcuts.record = document.getElementById('recordShortcut').value;
+            appSettings.shortcuts.window = document.getElementById('windowShortcut').value;
+            appSettings.shortcuts.stop = document.getElementById('stopShortcut').value;
+            appSettings.shortcuts.pause = document.getElementById('pauseShortcut').value;
+
+            // localStorage에 저장
+            localStorage.setItem('appSettings', JSON.stringify(appSettings));
+            
+            closeSettingsModal();
+            applySettings();
+        }
+
+        // 설정 적용
+        function applySettings() {
+            // FPS 및 해상도 표시 업데이트
+            const statusInfo = document.querySelector('.status-info');
+            if (statusInfo) {
+                const fpsValue = statusInfo.querySelector('.status-value:last-child');
+                if (fpsValue) {
+                    fpsValue.textContent = `${appSettings.video.fps}FPS`;
+                }
+                
+                const resolutionMap = {
+                    '5k': '5K',
+                    '4k': '4K',
+                    '1080p': 'FHD',
+                    '720p': 'HD'
+                };
+                const resValue = statusInfo.querySelector('.status-value:first-child');
+                if (resValue) {
+                    resValue.textContent = resolutionMap[appSettings.video.resolution];
+                }
+            }
+        }
+
+        // 탭 전환
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                
+                // 탭 활성화
+                document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // 패널 전환
+                document.querySelectorAll('.settings-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                
+                const panelMap = {
+                    'general': 'generalPanel',
+                    'video': 'videoPanel',
+                    'overlay': 'overlayPanel',
+                    'shortcuts': 'shortcutsPanel'
+                };
+                
+                const activePanel = document.getElementById(panelMap[tabName]);
+                if (activePanel) {
+                    activePanel.classList.add('active');
+                }
+            });
+        });
+
+        // 품질 슬라이더 업데이트
+        document.getElementById('qualitySlider').addEventListener('input', (e) => {
+            document.getElementById('qualityValue').textContent = e.target.value;
+        });
+
+        // 웹캠 체크박스 변경 시
+        document.getElementById('webcamCheck').addEventListener('change', (e) => {
+            const webcamSelect = document.getElementById('webcamSelect');
+            const webcamOptions = document.getElementById('webcamOptions');
+            if (e.target.checked) {
+                webcamSelect.style.display = 'block';
+                webcamOptions.style.display = 'block';
+            } else {
+                webcamSelect.style.display = 'none';
+                webcamOptions.style.display = 'none';
+            }
+        });
+
+        // 마이크 체크박스 변경 시
+        document.getElementById('micCheck').addEventListener('change', (e) => {
+            const micSelect = document.getElementById('micSelect');
+            if (e.target.checked) {
+                micSelect.style.display = 'block';
+            } else {
+                micSelect.style.display = 'none';
+            }
+        });
+
+        // 모달 이벤트 리스너
+        closeSettingsBtn.addEventListener('click', closeSettingsModal);
+        cancelSettingsBtn.addEventListener('click', closeSettingsModal);
+        saveSettingsBtn.addEventListener('click', saveSettings);
+
+        // 초기 설정 적용
+        applySettings();
+
+        // 단축키 입력 처리
+        let currentShortcutInput = null;
+        let recordingKeys = false;
+        
+        // 단축키 입력 필드 클릭 이벤트
+        document.querySelectorAll('.shortcut-input').forEach(input => {
+            input.addEventListener('focus', (e) => {
+                currentShortcutInput = e.target;
+                recordingKeys = true;
+                e.target.value = '';
+                e.target.placeholder = '키 조합을 누르세요...';
+                e.target.style.background = '#4a4a4c';
+            });
+            
+            input.addEventListener('blur', (e) => {
+                recordingKeys = false;
+                e.target.style.background = '#3a3a3c';
+                
+                // 값이 없으면 기존 값 복원
+                if (!e.target.value) {
+                    const action = e.target.dataset.action;
+                    e.target.value = appSettings.shortcuts[action] || '';
+                    e.target.placeholder = '클릭 후 단축키 입력';
+                }
+            });
+        });
+        
+        // 키 입력 감지
+        document.addEventListener('keydown', (e) => {
+            if (recordingKeys && currentShortcutInput) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const keys = [];
+                
+                // 특수키 감지
+                if (e.ctrlKey || e.metaKey) keys.push(e.metaKey ? '⌘' : 'Ctrl');
+                if (e.altKey) keys.push(e.altKey ? '⌥' : 'Alt');
+                if (e.shiftKey) keys.push('⇧');
+                
+                // 일반 키 추가
+                if (e.key && !['Control', 'Alt', 'Shift', 'Meta', 'Command'].includes(e.key)) {
+                    // 특수 키 매핑
+                    const keyMap = {
+                        'ArrowUp': '↑',
+                        'ArrowDown': '↓',
+                        'ArrowLeft': '←',
+                        'ArrowRight': '→',
+                        'Enter': '⏎',
+                        'Escape': 'ESC',
+                        'Space': 'Space',
+                        'Tab': 'Tab',
+                        'Backspace': '⌫',
+                        'Delete': 'Del'
+                    };
+                    
+                    const displayKey = keyMap[e.key] || e.key.toUpperCase();
+                    keys.push(displayKey);
+                }
+                
+                if (keys.length > 0) {
+                    const shortcut = keys.join('+');
+                    currentShortcutInput.value = shortcut;
+                    
+                    // Enter 키로 확정
+                    if (e.key === 'Enter' && keys.length === 1) {
+                        currentShortcutInput.blur();
+                    }
+                }
+            }
+        });
+        
+        // 전역 단축키 리스너
+        document.addEventListener('keydown', (e) => {
+            // 설정 모달이 열려있거나 입력 중이면 무시
+            if (settingsModal.classList.contains('active') || recordingKeys) return;
+            
+            // 입력 필드에 포커스가 있으면 무시
+            if (document.activeElement.tagName === 'INPUT' || 
+                document.activeElement.tagName === 'TEXTAREA') return;
+            
+            const pressedKeys = [];
+            if (e.ctrlKey || e.metaKey) pressedKeys.push(e.metaKey ? '⌘' : 'Ctrl');
+            if (e.altKey) pressedKeys.push(e.altKey ? '⌥' : 'Alt');
+            if (e.shiftKey) pressedKeys.push('⇧');
+            
+            if (e.key && !['Control', 'Alt', 'Shift', 'Meta', 'Command'].includes(e.key)) {
+                const keyMap = {
+                    'ArrowUp': '↑', 'ArrowDown': '↓', 'ArrowLeft': '←', 'ArrowRight': '→',
+                    'Enter': '⏎', 'Escape': 'ESC', 'Space': 'Space', 'Tab': 'Tab',
+                    'Backspace': '⌫', 'Delete': 'Del'
+                };
+                pressedKeys.push(keyMap[e.key] || e.key.toUpperCase());
+            }
+            
+            const shortcut = pressedKeys.join('+');
+            
+            // 녹화 시작/중지
+            if (shortcut === appSettings.shortcuts.record) {
+                e.preventDefault();
+                startBtn.click();
+            }
+            // 녹화 중단
+            else if (shortcut === appSettings.shortcuts.stop && isRecording) {
+                e.preventDefault();
+                stopBtn.click();
+            }
+            // 일시정지/재개
+            else if (shortcut === appSettings.shortcuts.pause && isRecording) {
+                e.preventDefault();
+                pauseBtn.click();
+            }
+        });
+
+        // 카운트다운 기능
+        async function showCountdown() {
+            if (!appSettings.general.countdown) return Promise.resolve();
+            
+            const countdownDiv = document.createElement('div');
+            countdownDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 120px;
+                font-weight: bold;
+                color: #ff5252;
+                z-index: 10000;
+                background: rgba(0, 0, 0, 0.8);
+                padding: 40px 60px;
+                border-radius: 20px;
+            `;
+            document.body.appendChild(countdownDiv);
+            
+            for (let i = appSettings.general.countdownSeconds; i > 0; i--) {
+                countdownDiv.textContent = i;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            countdownDiv.remove();
+        }
+
+        // 카운트다운 기능은 이미 startBtn 이벤트 리스너에 포함됨
+    </script>
+</body>
+</html>

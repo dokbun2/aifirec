@@ -1,0 +1,105 @@
+{
+  "name": "screen-recorder-pro",
+  "version": "1.0.0",
+  "description": "Professional screen recording application like Bandicam",
+  "main": "dist/main/main.js",
+  "homepage": "./",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:4000 && npm run dev:main\"",
+    "dev:main": "cross-env NODE_ENV=development electron .",
+    "dev:renderer": "cross-env NODE_ENV=development webpack serve --config webpack.renderer.config.js",
+    "build": "npm run build:renderer && npm run build:main",
+    "build:main": "tsc --project tsconfig.main.json",
+    "build:renderer": "cross-env NODE_ENV=production webpack --config webpack.renderer.config.js",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "clean": "rimraf dist",
+    "test": "echo \"테스트 준비 중...\" && exit 0"
+  },
+  "keywords": [
+    "screen-recorder",
+    "screen-capture",
+    "video-recording",
+    "electron",
+    "desktop"
+  ],
+  "author": "AIFI Recorder Pro Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.8.0",
+    "electron": "^26.0.0",
+    "electron-builder": "^24.6.0",
+    "html-webpack-plugin": "^5.5.0",
+    "rimraf": "^5.0.0",
+    "style-loader": "^3.3.0",
+    "ts-loader": "^9.4.0",
+    "typescript": "^5.1.0",
+    "wait-on": "^7.0.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.0",
+    "webpack-dev-server": "^4.15.0"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.0",
+    "@mui/material": "^5.14.0",
+    "electron-store": "^8.1.0",
+    "lucide-react": "^0.542.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "build": {
+    "appId": "com.screenrecorderpro.app",
+    "productName": "AIFI Recorder Pro",
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraFiles": [
+      {
+        "from": "src/renderer/index.html",
+        "to": "renderer/index.html"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "NSCameraUsageDescription": "이 앱은 화면 녹화를 위해 카메라 접근이 필요합니다.",
+        "NSMicrophoneUsageDescription": "이 앱은 오디오 녹화를 위해 마이크 접근이 필요합니다.",
+        "NSScreenCaptureDescription": "이 앱은 화면 녹화를 위해 화면 캡처 권한이 필요합니다."
+      }
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
