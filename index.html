@@ -1502,7 +1502,122 @@
         function playRecording(id) {
             const recording = recordingHistory.find(r => r.id == id);
             if (recording) {
-                window.open(recording.url, '_blank');
+                // Blob URL이 유효한지 확인
+                fetch(recording.url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        // 새로운 Blob URL 생성
+                        const newUrl = URL.createObjectURL(blob);
+                        
+                        // 새 창에서 비디오 재생
+                        const videoWindow = window.open('', '_blank', 'width=800,height=600');
+                        if (videoWindow) {
+                            videoWindow.document.write(`
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                    <title>${recording.name} - AIFI CAM Player</title>
+                                    <style>
+                                        body {
+                                            margin: 0;
+                                            padding: 0;
+                                            background: #000;
+                                            display: flex;
+                                            justify-content: center;
+                                            align-items: center;
+                                            height: 100vh;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                                        }
+                                        video {
+                                            max-width: 100%;
+                                            max-height: 100%;
+                                            width: auto;
+                                            height: auto;
+                                        }
+                                        .controls {
+                                            position: fixed;
+                                            bottom: 20px;
+                                            left: 50%;
+                                            transform: translateX(-50%);
+                                            background: rgba(0,0,0,0.7);
+                                            padding: 10px 20px;
+                                            border-radius: 8px;
+                                            color: white;
+                                            font-size: 14px;
+                                        }
+                                        .filename {
+                                            position: fixed;
+                                            top: 20px;
+                                            left: 50%;
+                                            transform: translateX(-50%);
+                                            background: rgba(0,0,0,0.7);
+                                            padding: 8px 16px;
+                                            border-radius: 6px;
+                                            color: white;
+                                            font-size: 13px;
+                                        }
+                                        .error-message {
+                                            color: white;
+                                            text-align: center;
+                                            padding: 20px;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <div class="filename">${recording.name}</div>
+                                    <video controls autoplay id="videoPlayer">
+                                        <source src="${newUrl}" type="video/webm">
+                                        브라우저가 비디오 재생을 지원하지 않습니다.
+                                    </video>
+                                    <div class="controls">
+                                        파일 크기: ${formatFileSize(recording.size)} | 녹화 시간: ${recording.duration}
+                                    </div>
+                                    <script>
+                                        const video = document.getElementById('videoPlayer');
+                                        video.onerror = function(e) {
+                                            document.body.innerHTML = '<div class="error-message"><h2>비디오를 재생할 수 없습니다</h2><p>파일이 손상되었거나 브라우저가 지원하지 않는 형식입니다.</p></div>';
+                                        };
+                                    </script>
+                                </body>
+                                </html>
+                            `);
+                        } else {
+                            alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('녹화 파일 재생 실패:', error);
+                        // 대체 방법: 같은 창에서 비디오 엘리먼트로 재생
+                        const modal = document.createElement('div');
+                        modal.style.cssText = `
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: rgba(0, 0, 0, 0.9);
+                            z-index: 10000;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        `;
+                        
+                        modal.innerHTML = `
+                            <div style="position: relative; max-width: 90%; max-height: 90%;">
+                                <button onclick="this.parentElement.parentElement.remove()" 
+                                        style="position: absolute; top: -40px; right: 0; 
+                                               background: #ff5252; color: white; border: none; 
+                                               padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                    닫기
+                                </button>
+                                <video controls autoplay style="max-width: 100%; max-height: 80vh;">
+                                    <source src="${recording.url}" type="video/webm">
+                                </video>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(modal);
+                    });
             }
         }
         
