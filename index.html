@@ -14,18 +14,26 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #2d2d2d;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #ffffff;
             overflow: hidden;
             user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .app-container {
-            width: 100vw;
-            height: 100vh;
+            width: 480px;
+            height: 600px;
             display: flex;
             flex-direction: column;
             background: #2d2d2d;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
         }
 
         .title-bar {
@@ -92,18 +100,18 @@
         }
 
         .toolbar {
-            height: 110px;
+            height: 90px;
             background: #2d2d2d;
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            gap: 15px;
+            padding: 0 15px;
+            gap: 10px;
             border-bottom: 1px solid #1a1a1a;
         }
 
         .mode-btn {
-            width: 100px;
-            height: 80px;
+            width: 80px;
+            height: 60px;
             background: #3a3a3c;
             border: 1px solid #4a4a4c;
             border-radius: 4px;
@@ -137,8 +145,8 @@
         }
 
         .mode-icon {
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -151,8 +159,8 @@
         }
 
         .rec-button {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             background: #ff5252;
             border: 3px solid #ff5252;
             border-radius: 50%;
@@ -182,7 +190,7 @@
 
         .rec-text {
             color: white;
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
         }
 
@@ -416,18 +424,18 @@
         }
 
         .bottom-bar {
-            height: 50px;
+            height: 45px;
             background: #2d2d2d;
             border-top: 1px solid #3a3a3c;
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            gap: 20px;
+            padding: 0 15px;
+            gap: 15px;
         }
 
         .control-btn {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             background: #3a3a3c;
             border: 1px solid #4a4a4c;
             border-radius: 4px;
@@ -448,8 +456,8 @@
         }
 
         .control-icon {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             color: #d0d0d0;
         }
 
@@ -783,6 +791,33 @@
 
         .countdown-input {
             width: 60px;
+        }
+        
+        /* 반응형 디자인 */
+        @media (max-width: 520px) {
+            .app-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            body {
+                padding: 0;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .app-container {
+                width: 500px;
+                height: 650px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .app-container {
+                width: 520px;
+                height: 680px;
+            }
         }
     </style>
 </head>
@@ -1995,7 +2030,54 @@
             countdownDiv.remove();
         }
 
-        // 카운트다운 기능은 이미 startBtn 이벤트 리스너에 포함됨
+        // 창 드래그 기능 (데스크톱에서만)
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        const appContainer = document.querySelector('.app-container');
+        const titleBar = document.querySelector('.title-bar');
+        
+        // 데스크톱에서만 드래그 가능
+        if (window.innerWidth > 520) {
+            titleBar.style.cursor = 'move';
+            
+            titleBar.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+        }
+        
+        function dragStart(e) {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            if (e.target === titleBar) {
+                isDragging = true;
+            }
+        }
+        
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                appContainer.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            }
+        }
+        
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
     </script>
 </body>
 </html>
