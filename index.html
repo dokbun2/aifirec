@@ -473,6 +473,19 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+        
+        .control-btn.active {
+            background: #0078d4;
+            border-color: #0078d4;
+        }
+        
+        .control-btn.active .control-icon {
+            color: white;
+        }
+        
+        .control-btn.mic-off .control-icon {
+            color: #ff5252;
+        }
 
         .control-icon {
             width: 16px;
@@ -910,10 +923,10 @@
             <button class="control-btn" id="stopBtn" disabled>
                 <i data-lucide="square" class="control-icon"></i>
             </button>
-            <button class="control-btn">
+            <button class="control-btn" id="cameraBtn" title="웹캠 (개발 중)" disabled style="opacity: 0.3;">
                 <i data-lucide="camera" class="control-icon"></i>
             </button>
-            <button class="control-btn">
+            <button class="control-btn" id="micBtn" title="마이크 켜기/끄기">
                 <i data-lucide="mic" class="control-icon"></i>
             </button>
             
@@ -1216,6 +1229,7 @@
         const downloadAnchor = document.getElementById('downloadAnchor');
         const openFileBtn = document.getElementById('openFileBtn');
         const fileInput = document.getElementById('fileInput');
+        const micBtn = document.getElementById('micBtn');
 
         // 녹화 시작/중지
         startBtn.addEventListener('click', async () => {
@@ -1265,6 +1279,54 @@
                 });
 
                 console.log('스트림 획득 성공:', stream);
+                
+                // 마이크 오디오 추가 (설정에서 활성화된 경우)
+                if (appSettings.video.recordMic) {
+                    try {
+                        console.log('마이크 오디오 가져오기...');
+                        const micStream = await navigator.mediaDevices.getUserMedia({
+                            audio: {
+                                echoCancellation: true,
+                                noiseSuppression: true,
+                                autoGainControl: true,
+                                sampleRate: 48000,
+                                sampleSize: 16,
+                                channelCount: 2
+                            },
+                            video: false
+                        });
+                        
+                        // 오디오 컨텍스트 생성
+                        const audioContext = new AudioContext();
+                        const destination = audioContext.createMediaStreamDestination();
+                        
+                        // 시스템 오디오 트랙이 있는 경우 믹싱
+                        const systemAudioTracks = stream.getAudioTracks();
+                        if (systemAudioTracks.length > 0) {
+                            const systemSource = audioContext.createMediaStreamSource(new MediaStream([systemAudioTracks[0]]));
+                            const systemGain = audioContext.createGain();
+                            systemGain.gain.value = 1.0; // 시스템 오디오 볼륨
+                            systemSource.connect(systemGain);
+                            systemGain.connect(destination);
+                        }
+                        
+                        // 마이크 오디오 추가
+                        const micSource = audioContext.createMediaStreamSource(micStream);
+                        const micGain = audioContext.createGain();
+                        micGain.gain.value = 1.0; // 마이크 볼륨
+                        micSource.connect(micGain);
+                        micGain.connect(destination);
+                        
+                        // 기존 오디오 트랙 제거하고 믹싱된 오디오 추가
+                        stream.getAudioTracks().forEach(track => stream.removeTrack(track));
+                        destination.stream.getAudioTracks().forEach(track => stream.addTrack(track));
+                        
+                        console.log('마이크 오디오 믹싱 완료');
+                    } catch (micError) {
+                        console.error('마이크 오디오 가져오기 실패:', micError);
+                        alert('마이크 접근 권한이 거부되었습니다. 시스템 오디오만 녹음됩니다.');
+                    }
+                }
                 
                 // 스트림 유효성 검증
                 const videoTracks = stream.getVideoTracks();
@@ -1789,7 +1851,37 @@
         // 페이지 로드 시 히스토리 표시
         window.addEventListener('load', () => {
             updateHistoryUI();
+            // 마이크 버튼 초기 상태 설정
+            updateMicButton();
         });
+        
+        // 마이크 버튼 토글
+        micBtn.addEventListener('click', () => {
+            appSettings.video.recordMic = !appSettings.video.recordMic;
+            localStorage.setItem('appSettings', JSON.stringify(appSettings));
+            updateMicButton();
+            
+            // 녹화 중이면 알림 표시
+            if (isRecording) {
+                alert('녹화 중에는 마이크 설정을 변경할 수 없습니다.\n다음 녹화부터 적용됩니다.');
+            }
+        });
+        
+        // 마이크 버튼 상태 업데이트
+        function updateMicButton() {
+            if (appSettings.video.recordMic) {
+                micBtn.classList.add('active');
+                micBtn.classList.remove('mic-off');
+                micBtn.innerHTML = '<i data-lucide="mic" class="control-icon"></i>';
+                micBtn.title = '마이크 켜짐 (클릭: 끄기)';
+            } else {
+                micBtn.classList.remove('active');
+                micBtn.classList.add('mic-off');
+                micBtn.innerHTML = '<i data-lucide="mic-off" class="control-icon"></i>';
+                micBtn.title = '마이크 꺼짐 (클릭: 켜기)';
+            }
+            lucide.createIcons();
+        }
 
         // 설정 관련 변수 및 함수
         const settingsModal = document.getElementById('settingsModal');
