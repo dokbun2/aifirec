@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #e0e0e0 0%, #9e9e9e 100%);
             color: #ffffff;
             overflow: hidden;
             user-select: none;
@@ -1394,40 +1394,57 @@
 
         function handleStop() {
             const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            const url = URL.createObjectURL(blob);
             
-            // 녹화 정보 저장
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const fileName = `aifi_cam_${timestamp}.webm`;
-            const recordingData = {
-                id: Date.now(),
-                name: fileName,
-                size: blob.size,
-                date: new Date().toISOString(),
-                url: url,
-                duration: getRecordingDuration()
+            // Blob을 Base64로 변환하여 localStorage에 저장
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                const base64data = reader.result;
+                
+                // 녹화 정보 저장
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const fileName = `aifi_cam_${timestamp}.webm`;
+                const recordingData = {
+                    id: Date.now(),
+                    name: fileName,
+                    size: blob.size,
+                    date: new Date().toISOString(),
+                    data: base64data, // Base64 데이터 저장
+                    duration: getRecordingDuration()
+                };
+                
+                // 히스토리에 추가
+                recordingHistory.unshift(recordingData);
+                if (recordingHistory.length > 10) { // 최대 10개까지만 저장
+                    recordingHistory = recordingHistory.slice(0, 10);
+                }
+                
+                // localStorage 크기 제한 처리
+                try {
+                    localStorage.setItem('recordingHistory', JSON.stringify(recordingHistory));
+                } catch (e) {
+                    console.error('localStorage 용량 초과:', e);
+                    // 오래된 항목 삭제
+                    recordingHistory = recordingHistory.slice(0, 5);
+                    localStorage.setItem('recordingHistory', JSON.stringify(recordingHistory));
+                }
+                
+                // 히스토리 UI 업데이트
+                updateHistoryUI();
+                
+                // 다운로드 링크 생성
+                const url = URL.createObjectURL(blob);
+                const downloadAnchor = document.getElementById('downloadAnchor');
+                downloadAnchor.href = url;
+                downloadAnchor.download = fileName;
+                document.getElementById('downloadLink').style.display = 'block';
+                
+                // Lucide 아이콘 재생성
+                lucide.createIcons();
+                
+                // 자동 다운로드
+                downloadAnchor.click();
             };
-            
-            // 히스토리에 추가
-            recordingHistory.unshift(recordingData);
-            if (recordingHistory.length > 10) { // 최대 10개까지만 저장
-                recordingHistory = recordingHistory.slice(0, 10);
-            }
-            localStorage.setItem('recordingHistory', JSON.stringify(recordingHistory));
-            
-            // 히스토리 UI 업데이트
-            updateHistoryUI();
-            
-            // 다운로드 링크 생성
-            downloadAnchor.href = url;
-            downloadAnchor.download = fileName;
-            downloadLink.style.display = 'block';
-            
-            // Lucide 아이콘 재생성
-            lucide.createIcons();
-
-            // 자동 다운로드
-            downloadAnchor.click();
+            reader.readAsDataURL(blob);
         }
         
         function getRecordingDuration() {
@@ -1464,9 +1481,6 @@
                             </div>
                         </div>
                         <div class="history-actions">
-                            <button class="action-btn play" onclick="playRecording('${item.id}')">
-                                <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-                            </button>
                             <button class="action-btn download" onclick="downloadRecording('${item.id}')">
                                 <i data-lucide="download" style="width: 16px; height: 16px;"></i>
                             </button>
@@ -1499,133 +1513,18 @@
             return date.toLocaleDateString('ko-KR');
         }
         
-        function playRecording(id) {
-            const recording = recordingHistory.find(r => r.id == id);
-            if (recording) {
-                // Blob URL이 유효한지 확인
-                fetch(recording.url)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        // 새로운 Blob URL 생성
-                        const newUrl = URL.createObjectURL(blob);
-                        
-                        // 새 창에서 비디오 재생
-                        const videoWindow = window.open('', '_blank', 'width=800,height=600');
-                        if (videoWindow) {
-                            videoWindow.document.write(`
-                                <!DOCTYPE html>
-                                <html>
-                                <head>
-                                    <title>${recording.name} - AIFI CAM Player</title>
-                                    <style>
-                                        body {
-                                            margin: 0;
-                                            padding: 0;
-                                            background: #000;
-                                            display: flex;
-                                            justify-content: center;
-                                            align-items: center;
-                                            height: 100vh;
-                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                                        }
-                                        video {
-                                            max-width: 100%;
-                                            max-height: 100%;
-                                            width: auto;
-                                            height: auto;
-                                        }
-                                        .controls {
-                                            position: fixed;
-                                            bottom: 20px;
-                                            left: 50%;
-                                            transform: translateX(-50%);
-                                            background: rgba(0,0,0,0.7);
-                                            padding: 10px 20px;
-                                            border-radius: 8px;
-                                            color: white;
-                                            font-size: 14px;
-                                        }
-                                        .filename {
-                                            position: fixed;
-                                            top: 20px;
-                                            left: 50%;
-                                            transform: translateX(-50%);
-                                            background: rgba(0,0,0,0.7);
-                                            padding: 8px 16px;
-                                            border-radius: 6px;
-                                            color: white;
-                                            font-size: 13px;
-                                        }
-                                        .error-message {
-                                            color: white;
-                                            text-align: center;
-                                            padding: 20px;
-                                        }
-                                    </style>
-                                </head>
-                                <body>
-                                    <div class="filename">${recording.name}</div>
-                                    <video controls autoplay id="videoPlayer">
-                                        <source src="${newUrl}" type="video/webm">
-                                        브라우저가 비디오 재생을 지원하지 않습니다.
-                                    </video>
-                                    <div class="controls">
-                                        파일 크기: ${formatFileSize(recording.size)} | 녹화 시간: ${recording.duration}
-                                    </div>
-                                    <script>
-                                        const video = document.getElementById('videoPlayer');
-                                        video.onerror = function(e) {
-                                            document.body.innerHTML = '<div class="error-message"><h2>비디오를 재생할 수 없습니다</h2><p>파일이 손상되었거나 브라우저가 지원하지 않는 형식입니다.</p></div>';
-                                        };
-                                    </script>
-                                </body>
-                                </html>
-                            `);
-                        } else {
-                            alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('녹화 파일 재생 실패:', error);
-                        // 대체 방법: 같은 창에서 비디오 엘리먼트로 재생
-                        const modal = document.createElement('div');
-                        modal.style.cssText = `
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            width: 100%;
-                            height: 100%;
-                            background: rgba(0, 0, 0, 0.9);
-                            z-index: 10000;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        `;
-                        
-                        modal.innerHTML = `
-                            <div style="position: relative; max-width: 90%; max-height: 90%;">
-                                <button onclick="this.parentElement.parentElement.remove()" 
-                                        style="position: absolute; top: -40px; right: 0; 
-                                               background: #ff5252; color: white; border: none; 
-                                               padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                                    닫기
-                                </button>
-                                <video controls autoplay style="max-width: 100%; max-height: 80vh;">
-                                    <source src="${recording.url}" type="video/webm">
-                                </video>
-                            </div>
-                        `;
-                        
-                        document.body.appendChild(modal);
-                    });
-            }
-        }
+        // 재생 기능 제거 (필요시 주석 해제)
+        // function playRecording(id) {
+        //     const recording = recordingHistory.find(r => r.id == id);
+        //     // 재생 로직...
+        // }
         
         function downloadRecording(id) {
             const recording = recordingHistory.find(r => r.id == id);
             if (recording) {
                 const a = document.createElement('a');
-                a.href = recording.url;
+                // Base64 데이터가 있으면 사용, 없으면 URL 사용
+                a.href = recording.data || recording.url;
                 a.download = recording.name;
                 a.click();
             }
@@ -2184,7 +2083,7 @@
                 xOffset = currentX;
                 yOffset = currentY;
                 
-                appContainer.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                appContainer.style.transform = 'translate(' + currentX + 'px, ' + currentY + 'px)';
             }
         }
         
