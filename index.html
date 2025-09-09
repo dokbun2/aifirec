@@ -1255,7 +1255,13 @@
                         height: { ideal: 1080 },
                         frameRate: { ideal: 60 }
                     },
-                    audio: true
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 48000,
+                        sampleSize: 16,
+                        channelCount: 2
+                    }
                 });
 
                 console.log('스트림 획득 성공:', stream);
@@ -1270,14 +1276,26 @@
                 previewVideo.srcObject = stream;
                 // previewVideo.style.display = 'block'; // 미리보기 비활성화
 
-                // MediaRecorder 설정
-                const options = {
-                    mimeType: 'video/webm;codecs=vp8,opus'
+                // MediaRecorder 설정 - 고품질 오디오 설정
+                let options = {
+                    mimeType: 'video/webm;codecs=vp9,opus',
+                    videoBitsPerSecond: 5000000, // 5 Mbps for video
+                    audioBitsPerSecond: 256000   // 256 kbps for audio (고품질)
                 };
 
+                // 코덱 지원 확인 및 대체
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    console.log('기본 mimeType 지원 안함, webm으로 변경');
-                    options.mimeType = 'video/webm';
+                    console.log('VP9 지원 안함, VP8로 변경');
+                    options.mimeType = 'video/webm;codecs=vp8,opus';
+                    
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        console.log('VP8도 지원 안함, 기본 webm으로 변경');
+                        options = {
+                            mimeType: 'video/webm',
+                            videoBitsPerSecond: 5000000,
+                            audioBitsPerSecond: 256000
+                        };
+                    }
                 }
 
                 mediaRecorder = new MediaRecorder(stream, options);
