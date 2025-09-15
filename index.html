@@ -1352,23 +1352,27 @@
                 const res = resolutionMap[appSettings.video.resolution] || resolutionMap['1080p'];
 
                 // 화면 공유 스트림 가져오기
+                // audio: true로 설정하면 시스템 오디오 캡처 옵션이 표시됨
                 stream = await navigator.mediaDevices.getDisplayMedia({
                     video: {
                         width: { ideal: res.width },
                         height: { ideal: res.height },
                         frameRate: { ideal: parseInt(appSettings.video.fps) }
                     },
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        sampleRate: 48000,
-                        sampleSize: 16,
-                        channelCount: 2
-                    }
+                    audio: true  // 시스템 오디오 캡처 (사용자가 선택)
                 });
 
                 console.log('스트림 획득 성공:', stream);
-                
+
+                // 오디오 트랙 확인
+                const audioTracks = stream.getAudioTracks();
+                console.log('오디오 트랙 수:', audioTracks.length);
+                if (audioTracks.length === 0) {
+                    console.warn('시스템 오디오가 캡처되지 않았습니다. 브라우저에서 "오디오 공유" 옵션을 선택했는지 확인하세요.');
+                } else {
+                    console.log('시스템 오디오 캡처 성공');
+                }
+
                 // 마이크 오디오 추가 (설정에서 활성화된 경우)
                 if (appSettings.video.recordMic) {
                     try {
