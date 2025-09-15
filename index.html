@@ -16,9 +16,11 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #181818;
             color: #ffffff;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             user-select: none;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
@@ -27,13 +29,13 @@
 
         .app-container {
             width: 480px;
-            height: 600px;
+            height: 450px;
             display: flex;
             flex-direction: column;
             background: #2d2d2d;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 
+            box-shadow:
                 0 0 0 1px rgba(0, 0, 0, 0.5),
                 0 20px 60px rgba(0, 0, 0, 0.5),
                 0 0 100px rgba(0, 0, 0, 0.3);
@@ -825,30 +827,77 @@
             width: 60px;
         }
         
+        /* 애드센스 컨테이너 스타일 */
+        .ad-container {
+            width: 100%;
+            max-width: 520px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d2d2d;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow:
+                0 0 0 1px rgba(0, 0, 0, 0.5),
+                0 10px 30px rgba(0, 0, 0, 0.3);
+            min-height: 100px;
+        }
+
+        .ad-header {
+            font-size: 11px;
+            color: #888;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* 애드센스 반응형 최적화 */
+        .adsbygoogle {
+            display: block !important;
+            width: 100% !important;
+            min-height: 90px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+
         /* 반응형 디자인 */
         @media (max-width: 520px) {
             .app-container {
                 width: 100%;
-                height: 100vh;
+                height: 60vh;
+                max-height: 450px;
                 border-radius: 0;
             }
-            
+
+            .ad-container {
+                width: 100%;
+                margin-top: 10px;
+                border-radius: 0;
+            }
+
             body {
                 padding: 0;
             }
         }
-        
+
         @media (min-width: 768px) {
             .app-container {
                 width: 500px;
-                height: 650px;
+                height: 480px;
+            }
+
+            .ad-container {
+                max-width: 500px;
             }
         }
-        
+
         @media (min-width: 1024px) {
             .app-container {
                 width: 520px;
-                height: 680px;
+                height: 500px;
+            }
+
+            .ad-container {
+                max-width: 520px;
             }
         }
     </style>
@@ -2312,5 +2361,24 @@
             isDragging = false;
         }
     </script>
+
+    <!-- 애드센스 광고 컨테이너 -->
+    <div class="ad-container">
+        <div class="ad-header">SPONSORED</div>
+
+        <!-- Google AdSense 광고 -->
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3297361889610977"
+             crossorigin="anonymous"></script>
+        <!-- 하루오프레코더 -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-3297361889610977"
+             data-ad-slot="7715083618"
+             data-ad-format="horizontal"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
 </body>
 </html>
