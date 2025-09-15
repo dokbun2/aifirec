@@ -1076,60 +1076,90 @@
                 
                 <!-- 비디오 설정 -->
                 <div class="settings-panel" id="videoPanel">
+                    <!-- 화질 프리셋 선택 -->
+                    <div class="setting-group" style="background: linear-gradient(135deg, rgba(0, 120, 212, 0.1), rgba(0, 120, 212, 0.05)); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <div class="setting-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <i data-lucide="sparkles" style="width: 16px; height: 16px; color: #0078d4;"></i>
+                            <span style="font-weight: 600; color: #0078d4;">화질 프리셋</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                            <button class="quality-preset-btn" data-preset="maximum" style="padding: 12px 8px; background: #0078d4; color: white; border: 2px solid #0078d4; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                <div style="font-size: 14px; font-weight: 600;">최상급</div>
+                                <div style="font-size: 10px; margin-top: 4px; opacity: 0.9;">4K 60fps</div>
+                                <div style="font-size: 9px; margin-top: 2px; opacity: 0.8;">10-15 Mbps</div>
+                            </button>
+                            <button class="quality-preset-btn" data-preset="high" style="padding: 12px 8px; background: transparent; color: #d0d0d0; border: 2px solid #5a5a5c; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                <div style="font-size: 14px; font-weight: 600;">고급</div>
+                                <div style="font-size: 10px; margin-top: 4px; opacity: 0.9;">1080p 60fps</div>
+                                <div style="font-size: 9px; margin-top: 2px; opacity: 0.8;">5-8 Mbps</div>
+                            </button>
+                            <button class="quality-preset-btn" data-preset="standard" style="padding: 12px 8px; background: transparent; color: #d0d0d0; border: 2px solid #5a5a5c; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                <div style="font-size: 14px; font-weight: 600;">표준</div>
+                                <div style="font-size: 10px; margin-top: 4px; opacity: 0.9;">720p 30fps</div>
+                                <div style="font-size: 9px; margin-top: 2px; opacity: 0.8;">2-3 Mbps</div>
+                            </button>
+                        </div>
+                        <div style="margin-top: 10px; padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px;">
+                            <p style="font-size: 11px; color: #9a9a9a; margin: 0; display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="info" style="width: 12px; height: 12px;"></i>
+                                <span id="qualityPresetInfo">최상급 화질 선택됨 - 최고 품질의 녹화를 제공합니다</span>
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="setting-group">
                         <div class="setting-label">형식</div>
                         <div style="display: flex; gap: 10px;">
                             <div style="flex: 1;">
                                 <div style="font-size: 11px; color: #9a9a9a; margin-bottom: 5px;">파일 형식</div>
                                 <select class="setting-select" id="formatSelect">
+                                    <option value="webm" selected>WebM (권장)</option>
                                     <option value="mp4">MP4</option>
-                                    <option value="webm">WebM</option>
-                                    <option value="avi">AVI</option>
-                                    <option value="mov">MOV</option>
+                                    <option value="mkv">MKV</option>
                                 </select>
                             </div>
                             <div style="flex: 1;">
                                 <div style="font-size: 11px; color: #9a9a9a; margin-bottom: 5px;">코덱</div>
                                 <select class="setting-select" id="codecSelect">
-                                    <option value="h264">H.264</option>
-                                    <option value="h265">H.265</option>
+                                    <option value="vp9" selected>VP9 (최적)</option>
                                     <option value="vp8">VP8</option>
-                                    <option value="vp9">VP9</option>
+                                    <option value="h264">H.264</option>
+                                    <option value="av1">AV1 (실험적)</option>
                                 </select>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="setting-group">
                         <div class="setting-label">
                             <span>품질</span>
                             <select class="setting-select" style="width: 100px;" id="qualityMode">
-                                <option value="vbr">VBR</option>
+                                <option value="vbr" selected>VBR (권장)</option>
                                 <option value="cbr">CBR</option>
                             </select>
                         </div>
-                        <input type="range" class="quality-slider" id="qualitySlider" min="0" max="100" value="50">
+                        <input type="range" class="quality-slider" id="qualitySlider" min="0" max="100" value="85">
                         <div class="slider-labels">
                             <span>0</span>
-                            <span id="qualityValue">50</span>
+                            <span id="qualityValue">85</span>
                             <span>100</span>
                         </div>
                     </div>
-                    
+
                     <div class="setting-group">
                         <div class="setting-label">최대 해상도</div>
                         <select class="setting-select" id="resolutionSelect">
                             <option value="5k">5K UHD (5120x2880)</option>
-                            <option value="4k">4K UHD (3840x2160)</option>
+                            <option value="4k" selected>4K UHD (3840x2160)</option>
                             <option value="1080p">Full HD (1920x1080)</option>
                             <option value="720p">HD (1280x720)</option>
                         </select>
                     </div>
-                    
+
                     <div class="setting-group">
                         <div class="setting-label">FPS</div>
                         <select class="setting-select" id="fpsSelect">
-                            <option value="60">60</option>
+                            <option value="60" selected>60</option>
                             <option value="30">30</option>
                             <option value="24">24</option>
                             <option value="15">15</option>
@@ -1310,13 +1340,23 @@
         async function startRecording() {
             try {
                 console.log('화면 공유 시작 시도...');
-                
+
+                // 해상도 및 FPS 설정 (프리셋에 따라)
+                const resolutionMap = {
+                    '5k': { width: 5120, height: 2880 },
+                    '4k': { width: 3840, height: 2160 },
+                    '1080p': { width: 1920, height: 1080 },
+                    '720p': { width: 1280, height: 720 }
+                };
+
+                const res = resolutionMap[appSettings.video.resolution] || resolutionMap['1080p'];
+
                 // 화면 공유 스트림 가져오기
                 stream = await navigator.mediaDevices.getDisplayMedia({
                     video: {
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 },
-                        frameRate: { ideal: 60 }
+                        width: { ideal: res.width },
+                        height: { ideal: res.height },
+                        frameRate: { ideal: parseInt(appSettings.video.fps) }
                     },
                     audio: {
                         echoCancellation: true,
@@ -1387,27 +1427,56 @@
                 previewVideo.srcObject = stream;
                 // previewVideo.style.display = 'block'; // 미리보기 비활성화
 
-                // MediaRecorder 설정 - 고품질 오디오 설정
+                // MediaRecorder 설정 - 프리셋에 따른 비트레이트 적용
+                const videoBitrate = appSettings.video.videoBitrate || 5000000;
+                const audioBitrate = parseInt(appSettings.video.audioBitrate) * 1000 || 256000;
+
+                // 코덱 매핑
+                let mimeType = 'video/webm';
+                if (appSettings.video.codec === 'vp9') {
+                    mimeType = 'video/webm;codecs=vp9,opus';
+                } else if (appSettings.video.codec === 'vp8') {
+                    mimeType = 'video/webm;codecs=vp8,opus';
+                } else if (appSettings.video.codec === 'av1') {
+                    mimeType = 'video/webm;codecs=av1,opus';
+                } else if (appSettings.video.codec === 'h264') {
+                    mimeType = 'video/webm;codecs=h264,opus';
+                }
+
                 let options = {
-                    mimeType: 'video/webm;codecs=vp9,opus',
-                    videoBitsPerSecond: 5000000, // 5 Mbps for video
-                    audioBitsPerSecond: 256000   // 256 kbps for audio (고품질)
+                    mimeType: mimeType,
+                    videoBitsPerSecond: videoBitrate,
+                    audioBitsPerSecond: audioBitrate
                 };
 
                 // 코덱 지원 확인 및 대체
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    console.log('VP9 지원 안함, VP8로 변경');
-                    options.mimeType = 'video/webm;codecs=vp8,opus';
-                    
+                    console.log(`${appSettings.video.codec} 지원 안함, VP9로 변경 시도`);
+                    options.mimeType = 'video/webm;codecs=vp9,opus';
+
                     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                        console.log('VP8도 지원 안함, 기본 webm으로 변경');
-                        options = {
-                            mimeType: 'video/webm',
-                            videoBitsPerSecond: 5000000,
-                            audioBitsPerSecond: 256000
-                        };
+                        console.log('VP9 지원 안함, VP8로 변경');
+                        options.mimeType = 'video/webm;codecs=vp8,opus';
+
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                            console.log('VP8도 지원 안함, 기본 webm으로 변경');
+                            options = {
+                                mimeType: 'video/webm',
+                                videoBitsPerSecond: videoBitrate,
+                                audioBitsPerSecond: audioBitrate
+                            };
+                        }
                     }
                 }
+
+                console.log('녹화 설정:', {
+                    preset: appSettings.video.qualityPreset,
+                    resolution: appSettings.video.resolution,
+                    fps: appSettings.video.fps,
+                    videoBitrate: `${(videoBitrate / 1000000).toFixed(1)} Mbps`,
+                    audioBitrate: `${appSettings.video.audioBitrate} kbps`,
+                    codec: options.mimeType
+                });
 
                 mediaRecorder = new MediaRecorder(stream, options);
                 recordedChunks = [];
@@ -1951,16 +2020,18 @@
                 showAfterRecord: true
             },
             video: {
-                format: 'mp4',
-                codec: 'h264',
+                qualityPreset: 'maximum', // 기본값: 최상급 화질
+                format: 'webm',
+                codec: 'vp9',
                 qualityMode: 'vbr',
-                quality: 50,
-                resolution: '5k',
+                quality: 85,
+                resolution: '4k',
                 fps: 60,
-                audioCodec: 'aac',
+                audioCodec: 'opus',
                 audioBitrate: '256',
                 recordSpeaker: true,
-                recordMic: false
+                recordMic: false,
+                videoBitrate: 10000000  // 10 Mbps (최상급 기본값)
             },
             overlay: {
                 showCursor: true,
@@ -2137,6 +2208,99 @@
         // 품질 슬라이더 업데이트
         document.getElementById('qualitySlider').addEventListener('input', (e) => {
             document.getElementById('qualityValue').textContent = e.target.value;
+        });
+
+        // 화질 프리셋 버튼 이벤트
+        document.querySelectorAll('.quality-preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // 모든 버튼 스타일 초기화
+                document.querySelectorAll('.quality-preset-btn').forEach(b => {
+                    b.style.background = 'transparent';
+                    b.style.color = '#d0d0d0';
+                    b.style.borderColor = '#5a5a5c';
+                });
+
+                // 선택된 버튼 스타일 적용
+                btn.style.background = '#0078d4';
+                btn.style.color = 'white';
+                btn.style.borderColor = '#0078d4';
+
+                const preset = btn.dataset.preset;
+
+                // 프리셋에 따른 설정값 적용
+                const presets = {
+                    maximum: {
+                        format: 'webm',
+                        codec: 'vp9',
+                        resolution: '4k',
+                        fps: 60,
+                        quality: 85,
+                        videoBitrate: 10000000, // 10 Mbps
+                        audioCodec: 'opus',
+                        audioBitrate: '256',
+                        info: '최상급 화질 선택됨 - 최고 품질의 녹화를 제공합니다 (파일 크기 대)'
+                    },
+                    high: {
+                        format: 'webm',
+                        codec: 'vp9',
+                        resolution: '1080p',
+                        fps: 60,
+                        quality: 70,
+                        videoBitrate: 5000000, // 5 Mbps
+                        audioCodec: 'opus',
+                        audioBitrate: '192',
+                        info: '고급 화질 선택됨 - 높은 품질과 적절한 파일 크기의 균형'
+                    },
+                    standard: {
+                        format: 'webm',
+                        codec: 'vp8',
+                        resolution: '720p',
+                        fps: 30,
+                        quality: 50,
+                        videoBitrate: 2500000, // 2.5 Mbps
+                        audioCodec: 'opus',
+                        audioBitrate: '128',
+                        info: '표준 화질 선택됨 - 파일 크기를 최소화하면서 적절한 품질 유지'
+                    }
+                };
+
+                const settings = presets[preset];
+
+                // UI 업데이트
+                document.getElementById('formatSelect').value = settings.format;
+                document.getElementById('codecSelect').value = settings.codec;
+                document.getElementById('resolutionSelect').value = settings.resolution;
+                document.getElementById('fpsSelect').value = settings.fps;
+                document.getElementById('qualitySlider').value = settings.quality;
+                document.getElementById('qualityValue').textContent = settings.quality;
+                document.getElementById('audioCodec').value = settings.audioCodec;
+                document.getElementById('audioBitrate').value = settings.audioBitrate;
+
+                // 정보 메시지 업데이트
+                document.getElementById('qualityPresetInfo').textContent = settings.info;
+
+                // 설정 저장
+                appSettings.video.qualityPreset = preset;
+                appSettings.video.format = settings.format;
+                appSettings.video.codec = settings.codec;
+                appSettings.video.resolution = settings.resolution;
+                appSettings.video.fps = settings.fps;
+                appSettings.video.quality = settings.quality;
+                appSettings.video.videoBitrate = settings.videoBitrate;
+                appSettings.video.audioCodec = settings.audioCodec;
+                appSettings.video.audioBitrate = settings.audioBitrate;
+            });
+        });
+
+        // 페이지 로드 시 저장된 프리셋 적용
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedPreset = appSettings.video.qualityPreset || 'maximum';
+            const presetBtn = document.querySelector(`[data-preset="${savedPreset}"]`);
+            if (presetBtn) {
+                presetBtn.click();
+            }
         });
 
         // 웹캠 체크박스 변경 시
