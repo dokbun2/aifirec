@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIFI CAM</title>
+    <title>REC FREE</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -905,7 +905,7 @@
 <body>
     <div class="app-container">
         <div class="title-bar">
-            <div class="app-title">AIFI CAM</div>
+            <div class="app-title">REC FREE</div>
             <div class="menu-icons">
                 <i data-lucide="folder" class="menu-icon" id="openFileBtn" title="녹화 파일 열기"></i>
             </div>
@@ -1041,7 +1041,7 @@
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" class="setting-checkbox" id="excludeSelfCheck" checked>
-                            AIFI CAM 실행 캡처에서 제외
+                            REC FREE 실행 캡처에서 제외
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" class="setting-checkbox" id="countdownCheck" checked>
@@ -1553,7 +1553,7 @@
             
             // 녹화 정보 저장 (파일 데이터는 저장하지 않음)
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const fileName = `aifi_cam_${timestamp}.webm`;
+            const fileName = `rec_free_${timestamp}.webm`;
             const recordingData = {
                 id: Date.now(),
                 name: fileName,
@@ -1696,7 +1696,7 @@
                             <!DOCTYPE html>
                             <html>
                             <head>
-                                <title>${recording.name} - AIFI CAM Player</title>
+                                <title>${recording.name} - REC FREE Player</title>
                                 <style>
                                     body {
                                         margin: 0;
@@ -1825,7 +1825,7 @@
                     <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>${file.name} - AIFI CAM Player</title>
+                        <title>${file.name} - REC FREE Player</title>
                         <style>
                             body {
                                 margin: 0;
