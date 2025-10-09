@@ -752,7 +752,7 @@
         }
 
         .browse-btn {
-            width: 80px;
+            min-width: 70px;
             height: 32px;
             background: #3a3a3c;
             border: 1px solid #4a4a4c;
@@ -761,10 +761,19 @@
             font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
         }
 
         .browse-btn:hover {
             background: #404042;
+        }
+
+        .browse-btn:active {
+            background: #0078d4;
+            border-color: #0078d4;
         }
 
         .quality-slider {
@@ -907,7 +916,7 @@
         <div class="title-bar">
             <div class="app-title">REC FREE</div>
             <div class="menu-icons">
-                <i data-lucide="folder" class="menu-icon" id="openFileBtn" title="녹화 파일 열기"></i>
+                <i data-lucide="folder" class="menu-icon" id="openFileBtn" title="폴더에서 비디오 검색"></i>
             </div>
         </div>
         
@@ -1057,14 +1066,16 @@
                         <div class="setting-label">출력 폴더</div>
                         <div class="folder-selector">
                             <input type="text" class="setting-input folder-input" id="outputFolder" value="브라우저 다운로드 폴더" readonly style="opacity: 0.7;">
-                            <button class="browse-btn" disabled style="opacity: 0.5; cursor: not-allowed;">찾아보기</button>
+                            <button class="browse-btn" id="openDownloadsBtn">
+                                <i data-lucide="folder-open" style="width: 14px; height: 14px; margin-right: 4px;"></i>
+                                열기
+                            </button>
                         </div>
-                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 152, 0, 0.1); border-radius: 4px;">
-                            <p style="font-size: 11px; color: #ff9800; margin: 0;">
+                        <div style="margin-top: 8px; padding: 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px;">
+                            <p style="font-size: 11px; color: #2196f3; margin: 0;">
                                 <i data-lucide="info" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
-                                웹 브라우저에서는 보안상 다운로드 폴더를 지정할 수 없습니다.<br>
-                                파일은 브라우저의 기본 다운로드 폴더에 저장됩니다.<br>
-                                <span style="color: #9a9a9a;">일반적으로: ~/Downloads 또는 ~/다운로드</span>
+                                '열기' 버튼을 클릭하여 저장할 폴더를 선택하세요.<br>
+                                <span style="color: #9a9a9a;">Chrome, Edge 최신 버전에서만 지원됩니다.</span>
                             </p>
                         </div>
                         <label class="checkbox-label" style="margin-top: 10px;">
@@ -1661,18 +1672,7 @@
             updateHistoryUI();
             
             // 다운로드 링크 생성 및 자동 다운로드
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            // 메모리 정리
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-            }, 1000);
+            saveRecordingFile(blob, fileName);
             
             // 다운로드 완료 알림
             const downloadLink = document.getElementById('downloadLink');
@@ -1831,6 +1831,9 @@
                     } else {
                         alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
                     }
+                } else {
+                    // 데이터가 없는 경우 - 폴더에서 파일을 찾도록 안내
+                    alert('녹화 파일이 다운로드 폴더에 저장되어 있습니다.\n상단의 폴더 아이콘을 클릭하여 파일을 찾아보세요.');
                 }
             }
         }
@@ -1885,9 +1888,51 @@
             });
         });
 
-        // 파일 열기 버튼 클릭 이벤트
-        openFileBtn.addEventListener('click', () => {
-            fileInput.click();
+        // 폴더 열기 버튼 클릭 이벤트
+        openFileBtn.addEventListener('click', async () => {
+            try {
+                // File System Access API 지원 확인
+                if (!('showDirectoryPicker' in window)) {
+                    alert('이 브라우저는 폴더 선택을 지원하지 않습니다.\nChrome, Edge 최신 버전을 사용하세요.');
+                    return;
+                }
+
+                // 폴더 선택 다이얼로그 열기
+                const directoryHandle = await window.showDirectoryPicker({
+                    mode: 'read'
+                });
+
+                // 선택된 폴더의 비디오 파일 목록 가져오기
+                const videoFiles = [];
+                for await (const entry of directoryHandle.values()) {
+                    if (entry.kind === 'file') {
+                        const file = await entry.getFile();
+                        // 비디오 파일만 필터링
+                        if (file.type.startsWith('video/') ||
+                            file.name.match(/\.(webm|mp4|avi|mov|mkv)$/i)) {
+                            videoFiles.push({
+                                name: file.name,
+                                size: file.size,
+                                file: file
+                            });
+                        }
+                    }
+                }
+
+                if (videoFiles.length === 0) {
+                    alert('선택한 폴더에 비디오 파일이 없습니다.');
+                    return;
+                }
+
+                // 비디오 파일 목록 표시
+                showVideoFileList(videoFiles, directoryHandle.name);
+
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('폴더 열기 오류:', error);
+                    alert('폴더 열기 중 오류가 발생했습니다.');
+                }
+            }
         });
 
         // 파일 선택 시 처리
@@ -2564,6 +2609,249 @@
                 }
             }, 1000);
         });
+
+        // 다운로드 폴더 선택 버튼
+        let downloadDirectoryHandle = null;
+        const openDownloadsBtn = document.getElementById('openDownloadsBtn');
+        const outputFolderInput = document.getElementById('outputFolder');
+
+        if (openDownloadsBtn) {
+            openDownloadsBtn.addEventListener('click', async function() {
+                try {
+                    // File System Access API 지원 확인
+                    if (!('showDirectoryPicker' in window)) {
+                        alert('이 브라우저는 폴더 선택을 지원하지 않습니다.\nChrome, Edge 최신 버전을 사용하세요.');
+                        return;
+                    }
+
+                    // 폴더 선택 다이얼로그 열기
+                    downloadDirectoryHandle = await window.showDirectoryPicker({
+                        mode: 'readwrite'
+                    });
+
+                    // 선택된 폴더명 표시
+                    outputFolderInput.value = downloadDirectoryHandle.name;
+                    outputFolderInput.style.opacity = '1';
+
+                    // 설정에 저장
+                    appSettings.general.outputFolder = downloadDirectoryHandle.name;
+                    localStorage.setItem('appSettings', JSON.stringify(appSettings));
+
+                    console.log('다운로드 폴더 설정됨:', downloadDirectoryHandle.name);
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.error('폴더 선택 오류:', error);
+                        alert('폴더 선택 중 오류가 발생했습니다.');
+                    }
+                }
+            });
+        }
+
+        // 비디오 파일 목록 표시 함수
+        function showVideoFileList(videoFiles, folderName) {
+            // 파일 크기 포맷 함수
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+            }
+
+            // 모달 생성
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: #2a2a2c;
+                border-radius: 12px;
+                padding: 24px;
+                max-width: 600px;
+                max-height: 70vh;
+                overflow-y: auto;
+                width: 90%;
+            `;
+
+            const title = document.createElement('h3');
+            title.textContent = `📁 ${folderName}`;
+            title.style.cssText = `
+                margin: 0 0 16px 0;
+                color: #fff;
+                font-size: 18px;
+            `;
+
+            const fileList = document.createElement('div');
+            fileList.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
+
+            videoFiles.forEach(videoFile => {
+                const fileItem = document.createElement('div');
+                fileItem.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px;
+                    background: #3a3a3c;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                `;
+
+                fileItem.onmouseover = () => fileItem.style.background = '#4a4a4c';
+                fileItem.onmouseout = () => fileItem.style.background = '#3a3a3c';
+
+                const fileInfo = document.createElement('div');
+                fileInfo.style.cssText = 'flex: 1;';
+                fileInfo.innerHTML = `
+                    <div style="color: #fff; font-size: 14px; margin-bottom: 4px;">${videoFile.name}</div>
+                    <div style="color: #9a9a9a; font-size: 12px;">${formatFileSize(videoFile.size)}</div>
+                `;
+
+                const playBtn = document.createElement('button');
+                playBtn.textContent = '재생';
+                playBtn.style.cssText = `
+                    padding: 6px 16px;
+                    background: #0078d4;
+                    border: none;
+                    border-radius: 4px;
+                    color: white;
+                    cursor: pointer;
+                    font-size: 13px;
+                `;
+                playBtn.onmouseover = () => playBtn.style.background = '#0066b8';
+                playBtn.onmouseout = () => playBtn.style.background = '#0078d4';
+
+                playBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    playVideoFile(videoFile.file);
+                    document.body.removeChild(modal);
+                };
+
+                fileItem.onclick = () => {
+                    playVideoFile(videoFile.file);
+                    document.body.removeChild(modal);
+                };
+
+                fileItem.appendChild(fileInfo);
+                fileItem.appendChild(playBtn);
+                fileList.appendChild(fileItem);
+            });
+
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '닫기';
+            closeBtn.style.cssText = `
+                width: 100%;
+                margin-top: 16px;
+                padding: 10px;
+                background: #5a5a5c;
+                border: none;
+                border-radius: 6px;
+                color: white;
+                cursor: pointer;
+                font-size: 14px;
+            `;
+            closeBtn.onmouseover = () => closeBtn.style.background = '#6a6a6c';
+            closeBtn.onmouseout = () => closeBtn.style.background = '#5a5a5c';
+            closeBtn.onclick = () => document.body.removeChild(modal);
+
+            content.appendChild(title);
+            content.appendChild(fileList);
+            content.appendChild(closeBtn);
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+
+            // 배경 클릭 시 닫기
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            };
+        }
+
+        // 비디오 파일 재생 함수
+        function playVideoFile(file) {
+            const url = URL.createObjectURL(file);
+            const videoWindow = window.open('', '_blank', 'width=800,height=600');
+            videoWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${file.name} - REC FREE Player</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background: #000;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                        }
+                        video {
+                            max-width: 100%;
+                            max-height: 100%;
+                            width: auto;
+                            height: auto;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <video controls autoplay>
+                        <source src="${url}" type="${file.type}">
+                    </video>
+                </body>
+                </html>
+            `);
+        }
+
+        // 녹화 파일 저장 함수
+        async function saveRecordingFile(blob, fileName) {
+            try {
+                // File System Access API가 지원되고 폴더가 선택되어 있으면 해당 폴더에 저장
+                if (downloadDirectoryHandle && 'showDirectoryPicker' in window) {
+                    const fileHandle = await downloadDirectoryHandle.getFileHandle(fileName, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    console.log('파일 저장 완료:', fileName);
+                } else {
+                    // 기본 브라우저 다운로드 방식
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    // 메모리 정리
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('파일 저장 오류:', error);
+                // 오류 발생 시 기본 다운로드 방식으로 폴백
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }
+        }
     </script>
 
     <!-- 애드센스 광고 컨테이너 -->
