@@ -835,38 +835,6 @@
         .countdown-input {
             width: 60px;
         }
-        
-        /* 애드센스 컨테이너 스타일 */
-        .ad-container {
-            width: 100%;
-            max-width: 520px;
-            margin-top: 20px;
-            padding: 15px;
-            background: #2d2d2d;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow:
-                0 0 0 1px rgba(0, 0, 0, 0.5),
-                0 10px 30px rgba(0, 0, 0, 0.3);
-            min-height: 100px;
-        }
-
-        .ad-header {
-            font-size: 11px;
-            color: #888;
-            text-align: center;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-        }
-
-        /* 애드센스 반응형 최적화 */
-        .adsbygoogle {
-            display: block !important;
-            width: 100% !important;
-            min-height: 90px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-        }
 
         /* 반응형 디자인 */
         @media (max-width: 520px) {
@@ -877,11 +845,6 @@
                 border-radius: 0;
             }
 
-            .ad-container {
-                width: 100%;
-                margin-top: 10px;
-                border-radius: 0;
-            }
 
             body {
                 padding: 0;
@@ -894,9 +857,6 @@
                 height: 480px;
             }
 
-            .ad-container {
-                max-width: 500px;
-            }
         }
 
         @media (min-width: 1024px) {
@@ -905,9 +865,6 @@
                 height: 500px;
             }
 
-            .ad-container {
-                max-width: 520px;
-            }
         }
     </style>
 </head>
@@ -2578,37 +2535,6 @@
             initialY = currentY;
             isDragging = false;
         }
-        // 애드센스 광고 초기화 (페이지 로드 후)
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                try {
-                    // 애드센스 광고 푸시
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                    console.log('AdSense initialized');
-
-                    // 광고 로드 확인 (디버깅용)
-                    setTimeout(() => {
-                        const adContainer = document.querySelector('.adsbygoogle');
-                        if (adContainer && adContainer.innerHTML.trim() === '') {
-                            console.log('광고가 로드되지 않았습니다. 다음을 확인하세요:');
-                            console.log('1. AdSense 계정이 승인되었는지');
-                            console.log('2. 도메인이 AdSense에 등록되었는지');
-                            console.log('3. 광고 슬롯 ID가 올바른지');
-                            console.log('4. 로컬 환경에서는 광고가 표시되지 않을 수 있음');
-
-                            // 개발 환경에서 테스트용 플레이스홀더 표시
-                            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') {
-                                adContainer.innerHTML = '<div style="background: #333; color: #888; padding: 30px; text-align: center; border-radius: 8px; font-size: 14px;">광고 영역 (로컬 환경에서는 실제 광고가 표시되지 않습니다)</div>';
-                            }
-                        } else if (adContainer && adContainer.innerHTML.trim() !== '') {
-                            console.log('광고가 성공적으로 로드되었습니다');
-                        }
-                    }, 3000);
-                } catch (error) {
-                    console.error('AdSense 초기화 오류:', error);
-                }
-            }, 1000);
-        });
 
         // 다운로드 폴더 선택 버튼
         let downloadDirectoryHandle = null;
@@ -2853,22 +2779,5 @@
             }
         }
     </script>
-
-    <!-- 애드센스 광고 컨테이너 -->
-    <div class="ad-container" id="adContainer">
-        <div class="ad-header">SPONSORED</div>
-
-        <!-- 하루오프레코더 광고 슬롯 -->
-        <ins class="adsbygoogle"
-             style="display:block; min-height: 90px;"
-             data-ad-client="ca-pub-3297361889610977"
-             data-ad-slot="7715083618"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-    </div>
-
-    <!-- Google AdSense Script (body 끝에 배치) -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3297361889610977"
-         crossorigin="anonymous"></script>
 </body>
 </html>
