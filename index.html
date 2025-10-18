@@ -505,6 +505,39 @@
             color: #ff5252;
         }
 
+        .mic-select {
+            background: #2d2d2d;
+            color: white;
+            border: 1px solid #404040;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+            margin-left: 10px;
+            max-width: 200px;
+        }
+
+        .mic-select:hover {
+            background: #363636;
+        }
+
+        .mic-level-indicator {
+            height: 4px;
+            background: #2d2d2d;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .mic-level-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00 0%, #ffff00 70%, #ff0000 100%);
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
         .control-icon {
             width: 16px;
             height: 16px;
@@ -960,6 +993,10 @@
             <button class="control-btn" id="micBtn" title="마이크 켜기/끄기">
                 <i data-lucide="mic" class="control-icon"></i>
             </button>
+            <!-- 마이크 선택 드롭다운 -->
+            <select id="micSelect" class="mic-select" style="display: none;">
+                <option value="">마이크 선택...</option>
+            </select>
             
             <div class="status-info">
                 <div class="status-item">
@@ -1294,6 +1331,107 @@
         const openFileBtn = document.getElementById('openFileBtn');
         const fileInput = document.getElementById('fileInput');
         const micBtn = document.getElementById('micBtn');
+        const micSelect = document.getElementById('micSelect');
+        let selectedMicId = null;
+        let micStream = null;
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+
+        // 마이크 목록 가져오기
+        async function getMicrophones() {
+            try {
+                // 먼저 권한 요청
+                await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    stream.getTracks().forEach(track => track.stop());
+                });
+
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const microphones = devices.filter(device => device.kind === 'audioinput');
+
+                // 드롭다운 업데이트
+                micSelect.innerHTML = '<option value="">마이크 선택...</option>';
+                microphones.forEach(mic => {
+                    const option = document.createElement('option');
+                    option.value = mic.deviceId;
+                    option.textContent = mic.label || `마이크 ${micSelect.options.length}`;
+                    micSelect.appendChild(option);
+                });
+
+                return microphones;
+            } catch (error) {
+                console.error('마이크 목록 가져오기 실패:', error);
+                return [];
+            }
+        }
+
+        // 마이크 선택 이벤트
+        micSelect.addEventListener('change', async (e) => {
+            selectedMicId = e.target.value;
+
+            // 이전 스트림 정지
+            if (micStream) {
+                micStream.getTracks().forEach(track => track.stop());
+                micStream = null;
+            }
+
+            if (selectedMicId) {
+                // 선택된 마이크로 스트림 생성
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            deviceId: selectedMicId,
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
+                            sampleRate: 48000,
+                            sampleSize: 24,
+                            channelCount: 2
+                        }
+                    });
+
+                    // 오디오 레벨 모니터링 시작
+                    startAudioLevelMonitoring(micStream);
+
+                    console.log('마이크 선택됨:', selectedMicId);
+                } catch (error) {
+                    console.error('마이크 스트림 생성 실패:', error);
+                    alert('선택한 마이크를 사용할 수 없습니다.');
+                    micSelect.value = '';
+                    selectedMicId = null;
+                }
+            }
+        });
+
+        // 오디오 레벨 모니터링
+        function startAudioLevelMonitoring(stream) {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            analyser = audioContext.createAnalyser();
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+            analyser.fftSize = 256;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function checkAudioLevel() {
+                if (!analyser) return;
+
+                analyser.getByteFrequencyData(dataArray);
+                const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+                const level = (average / 255) * 100;
+
+                // 여기서 오디오 레벨 표시 UI 업데이트 가능
+                // console.log('Audio level:', level);
+
+                requestAnimationFrame(checkAudioLevel);
+            }
+
+            checkAudioLevel();
+        }
 
         // 녹화 시작/중지
         startBtn.addEventListener('click', async () => {
@@ -1368,17 +1506,30 @@
                 if (appSettings.video.recordMic) {
                     try {
                         console.log('마이크 오디오 가져오기...');
-                        const micStream = await navigator.mediaDevices.getUserMedia({
-                            audio: {
+
+                        // 이미 선택된 마이크가 있으면 그것을 사용, 없으면 새로 생성
+                        let micStreamToUse = micStream;
+
+                        if (!micStreamToUse) {
+                            const audioConstraints = {
                                 echoCancellation: false,  // 에코 제거 비활성화 (음질 우선)
                                 noiseSuppression: false,  // 노이즈 억제 비활성화
                                 autoGainControl: false,   // 자동 게인 제어 비활성화
                                 sampleRate: 48000,        // 48kHz 샘플레이트
                                 sampleSize: 24,           // 24비트 음질
                                 channelCount: 2           // 스테레오
-                            },
-                            video: false
-                        });
+                            };
+
+                            // 선택된 마이크 ID가 있으면 사용
+                            if (selectedMicId) {
+                                audioConstraints.deviceId = { exact: selectedMicId };
+                            }
+
+                            micStreamToUse = await navigator.mediaDevices.getUserMedia({
+                                audio: audioConstraints,
+                                video: false
+                            });
+                        }
                         
                         // 오디오 컨텍스트 생성
                         const audioContext = new AudioContext();
@@ -1395,7 +1546,7 @@
                         }
                         
                         // 마이크 오디오 추가
-                        const micSource = audioContext.createMediaStreamSource(micStream);
+                        const micSource = audioContext.createMediaStreamSource(micStreamToUse);
                         const micGain = audioContext.createGain();
                         micGain.gain.value = 1.0; // 마이크 볼륨
                         micSource.connect(micGain);
@@ -2004,14 +2155,39 @@
         });
         
         // 마이크 버튼 토글
-        micBtn.addEventListener('click', () => {
+        micBtn.addEventListener('click', async () => {
+            // 녹화 중이면 변경 불가
+            if (isRecording) {
+                alert('녹화 중에는 마이크 설정을 변경할 수 없습니다.\n녹화를 중지한 후 다시 시도하세요.');
+                return;
+            }
+
             appSettings.video.recordMic = !appSettings.video.recordMic;
             localStorage.setItem('appSettings', JSON.stringify(appSettings));
             updateMicButton();
-            
-            // 녹화 중이면 알림 표시
-            if (isRecording) {
-                alert('녹화 중에는 마이크 설정을 변경할 수 없습니다.\n다음 녹화부터 적용됩니다.');
+
+            // 마이크 선택 드롭다운 표시/숨김
+            micSelect.style.display = appSettings.video.recordMic ? 'inline-block' : 'none';
+
+            if (appSettings.video.recordMic) {
+                // 마이크 켤 때 목록 가져오기
+                await getMicrophones();
+
+                // 마이크 선택 안내
+                if (micSelect.options.length > 1) {
+                    console.log('사용 가능한 마이크:', micSelect.options.length - 1, '개');
+                    alert('마이크가 활성화되었습니다.\n드롭다운에서 사용할 마이크를 선택해주세요.');
+                } else {
+                    alert('사용 가능한 마이크가 없습니다.\n마이크가 연결되어 있는지 확인해주세요.');
+                }
+            } else {
+                // 마이크 끌 때 스트림 정지
+                if (micStream) {
+                    micStream.getTracks().forEach(track => track.stop());
+                    micStream = null;
+                }
+                selectedMicId = null;
+                micSelect.value = '';
             }
         });
         
