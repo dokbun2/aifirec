@@ -83,10 +83,15 @@ class ScreenRecorderApp {
     // 개발 환경과 프로덕션 환경에 따른 URL 로드
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      this.mainWindow.loadURL('http://localhost:4000');
+      // 개발 환경에서는 상위 디렉토리의 index.html을 직접 로드
+      const indexPath = path.join(__dirname, '../../../../index.html');
+      console.log('Loading index.html from:', indexPath);
+      this.mainWindow.loadFile(indexPath);
       // this.mainWindow.webContents.openDevTools(); // 개발자 도구 자동 열기 비활성화
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+      // 프로덕션 환경에서도 메인 index.html을 로드
+      const indexPath = path.join(__dirname, '../../../../index.html');
+      this.mainWindow.loadFile(indexPath);
     }
 
     // 창 생성 직후 크기 설정
@@ -302,7 +307,7 @@ class ScreenRecorderApp {
   private createAppMenu(): void {
     const template: Electron.MenuItemConstructorOptions[] = [
       {
-        label: 'AIFI Recorder Pro',
+        label: 'TOOLBEE CAM',
         submenu: [
           { role: 'about' },
           { type: 'separator' },

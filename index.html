@@ -3,7 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REC FREE</title>
+    <title>TOOLBEE CAM</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#181818">
+    <meta name="description" content="Professional screen recording application">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TOOLBEE CAM">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png">
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -871,7 +887,7 @@
 <body>
     <div class="app-container">
         <div class="title-bar">
-            <div class="app-title">REC FREE</div>
+            <div class="app-title">TOOLBEE CAM</div>
             <div class="menu-icons">
                 <i data-lucide="folder" class="menu-icon" id="openFileBtn" title="폴더에서 비디오 검색"></i>
             </div>
@@ -1007,7 +1023,7 @@
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" class="setting-checkbox" id="excludeSelfCheck" checked>
-                            REC FREE 실행 캡처에서 제외
+                            TOOLBEE CAM 실행 캡처에서 제외
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" class="setting-checkbox" id="countdownCheck" checked>
@@ -1731,7 +1747,7 @@
                             <!DOCTYPE html>
                             <html>
                             <head>
-                                <title>${recording.name} - REC FREE Player</title>
+                                <title>${recording.name} - TOOLBEE CAM Player</title>
                                 <style>
                                     body {
                                         margin: 0;
@@ -1905,7 +1921,7 @@
                     <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>${file.name} - REC FREE Player</title>
+                        <title>${file.name} - TOOLBEE CAM Player</title>
                         <style>
                             body {
                                 margin: 0;
@@ -2712,7 +2728,7 @@
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>${file.name} - REC FREE Player</title>
+                    <title>${file.name} - TOOLBEE CAM Player</title>
                     <style>
                         body {
                             margin: 0;
@@ -2778,6 +2794,160 @@
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
             }
         }
+
+        // ========== PWA Support ==========
+
+        // Platform Detection
+        const isElectron = navigator.userAgent.includes('Electron');
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                      window.navigator.standalone === true;
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator && !isElectron) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful:', registration.scope);
+
+                        // Check for updates periodically
+                        setInterval(() => {
+                            registration.update();
+                        }, 60 * 60 * 1000); // Check every hour
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed:', err);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installButton = document.createElement('button');
+        installButton.innerHTML = '📥 앱 설치';
+        installButton.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+            z-index: 10000;
+            display: none;
+            transition: all 0.3s ease;
+        `;
+        installButton.addEventListener('mouseover', () => {
+            installButton.style.transform = 'scale(1.05)';
+        });
+        installButton.addEventListener('mouseout', () => {
+            installButton.style.transform = 'scale(1)';
+        });
+
+        // Only show install button if not in Electron or already installed as PWA
+        if (!isElectron && !isPWA) {
+            document.body.appendChild(installButton);
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Show install button
+            installButton.style.display = 'block';
+
+            // Animate entrance
+            setTimeout(() => {
+                installButton.style.animation = 'slideInUp 0.5s ease';
+            }, 100);
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                installButton.style.display = 'none';
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log('User response to install prompt:', outcome);
+                deferredPrompt = null;
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed successfully');
+            installButton.style.display = 'none';
+
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.innerHTML = '✅ 앱이 성공적으로 설치되었습니다!';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #27c93f;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(39, 201, 63, 0.3);
+                z-index: 10001;
+                animation: slideInDown 0.5s ease;
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        });
+
+        // Add CSS animations
+        const animationStyles = document.createElement('style');
+        animationStyles.textContent = `
+            @keyframes slideInUp {
+                from {
+                    transform: translateY(100px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideInDown {
+                from {
+                    transform: translateY(-100px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(animationStyles);
+
+        // Platform-specific features
+        if (isElectron) {
+            console.log('Running in Electron environment');
+            // Electron-specific features can be added here
+        } else if (isPWA) {
+            console.log('Running as installed PWA');
+            // PWA-specific features
+        } else {
+            console.log('Running in web browser');
+            // Regular web browser features
+        }
+
+        // Handle offline/online events
+        window.addEventListener('online', () => {
+            console.log('Back online');
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('Gone offline');
+        });
     </script>
 </body>
 </html>

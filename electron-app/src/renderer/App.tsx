@@ -196,7 +196,7 @@ const App: React.FC = () => {
         <HeaderContainer>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', letterSpacing: '1px' }}>
-              AIFI CAM
+            TOOLBEE CAM
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, WebkitAppRegion: 'no-drag' }}>
               <Button 
