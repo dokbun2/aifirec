@@ -1164,9 +1164,10 @@
                             <div style="flex: 1;">
                                 <div style="font-size: 11px; color: #9a9a9a; margin-bottom: 5px;">품질</div>
                                 <select class="setting-select" id="audioBitrate">
-                                    <option value="256">높음 - 256Kbps</option>
-                                    <option value="192">중간 - 192Kbps</option>
-                                    <option value="128">낮음 - 128Kbps</option>
+                                    <option value="320">최상급 - 320Kbps (스튜디오)</option>
+                                    <option value="256">높음 - 256Kbps (고품질)</option>
+                                    <option value="192">중간 - 192Kbps (표준)</option>
+                                    <option value="128">낮음 - 128Kbps (압축)</option>
                                 </select>
                             </div>
                         </div>
@@ -1343,11 +1344,12 @@
                         frameRate: { ideal: parseInt(appSettings.video.fps) }
                     },
                     audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        sampleRate: 48000,
-                        sampleSize: 16,
-                        channelCount: 2
+                        echoCancellation: false,  // 에코 제거 비활성화 (음질 우선)
+                        noiseSuppression: false,  // 노이즈 억제 비활성화 (원본 음질 유지)
+                        autoGainControl: false,   // 자동 게인 제어 비활성화
+                        sampleRate: 48000,        // 48kHz 샘플레이트 유지
+                        sampleSize: 24,           // 24비트로 증가 (더 나은 음질)
+                        channelCount: 2           // 스테레오 유지
                     }
                 });
 
@@ -1368,12 +1370,12 @@
                         console.log('마이크 오디오 가져오기...');
                         const micStream = await navigator.mediaDevices.getUserMedia({
                             audio: {
-                                echoCancellation: true,
-                                noiseSuppression: true,
-                                autoGainControl: true,
-                                sampleRate: 48000,
-                                sampleSize: 16,
-                                channelCount: 2
+                                echoCancellation: false,  // 에코 제거 비활성화 (음질 우선)
+                                noiseSuppression: false,  // 노이즈 억제 비활성화
+                                autoGainControl: false,   // 자동 게인 제어 비활성화
+                                sampleRate: 48000,        // 48kHz 샘플레이트
+                                sampleSize: 24,           // 24비트 음질
+                                channelCount: 2           // 스테레오
                             },
                             video: false
                         });
@@ -1422,7 +1424,8 @@
 
                 // MediaRecorder 설정 - 프리셋에 따른 비트레이트 적용
                 const videoBitrate = appSettings.video.videoBitrate || 5000000;
-                const audioBitrate = parseInt(appSettings.video.audioBitrate) * 1000 || 256000;
+                // 오디오 비트레이트 증가 (더 나은 음질)
+                const audioBitrate = parseInt(appSettings.video.audioBitrate) * 1000 || 320000;
 
                 // 코덱 매핑
                 let mimeType = 'video/webm';
@@ -2055,7 +2058,7 @@
                 resolution: '4k',
                 fps: 60,
                 audioCodec: 'aac',
-                audioBitrate: '256',
+                audioBitrate: '320',
                 recordSpeaker: true,
                 recordMic: false,
                 videoBitrate: 10000000  // 10 Mbps (최상급 기본값)
@@ -2266,7 +2269,7 @@
                         quality: 85,
                         videoBitrate: 10000000, // 10 Mbps
                         audioCodec: 'opus',
-                        audioBitrate: '256',
+                        audioBitrate: '320',
                         info: '최상급 화질 선택됨 - 최고 품질의 녹화를 제공합니다 (파일 크기 대)'
                     },
                     high: {
