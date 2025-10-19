@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AIFI CAM is a web-based screen recording application built as a single-page application in `index.html`. The entire application (HTML, CSS, and JavaScript) is contained within this single file for easy deployment and portability.
+TOOLBEE CAM is a web-based screen recording application built as a single-page application in `index.html`. The entire application (HTML, CSS, and JavaScript) is contained within this single file for easy deployment and portability.
 
 ## Architecture
 
